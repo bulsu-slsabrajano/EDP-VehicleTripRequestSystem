@@ -6,6 +6,46 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="lib" path="C:/Users/Jhunel/Documents/EDP/mssql/sqljdbc_13.4.0.0_enu/sqljdbc_13.4/enu/jars/mssql-jdbc-13.4.0.jre11.jar"/>
+	<classpathentry kind="lib" path="C:/Users/ASUS/Documents/SHANE/BSIT 2G-G2/SECOND SEMESTER/EVENT-DRIVEN PROGRAMMING/DRIVERS/JAVAFX DRIVERS/javafx-sdk-21.0.10/lib/javafx.base.jar">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/ASUS/Documents/SHANE/BSIT 2G-G2/SECOND SEMESTER/EVENT-DRIVEN PROGRAMMING/DRIVERS/JAVAFX DRIVERS/javafx-sdk-21.0.10/lib/javafx.controls.jar">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/ASUS/Documents/SHANE/BSIT 2G-G2/SECOND SEMESTER/EVENT-DRIVEN PROGRAMMING/DRIVERS/JAVAFX DRIVERS/javafx-sdk-21.0.10/lib/javafx.fxml.jar">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/ASUS/Documents/SHANE/BSIT 2G-G2/SECOND SEMESTER/EVENT-DRIVEN PROGRAMMING/DRIVERS/JAVAFX DRIVERS/javafx-sdk-21.0.10/lib/javafx.graphics.jar">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/ASUS/Documents/SHANE/BSIT 2G-G2/SECOND SEMESTER/EVENT-DRIVEN PROGRAMMING/DRIVERS/JAVAFX DRIVERS/javafx-sdk-21.0.10/lib/javafx.media.jar">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/ASUS/Documents/SHANE/BSIT 2G-G2/SECOND SEMESTER/EVENT-DRIVEN PROGRAMMING/DRIVERS/JAVAFX DRIVERS/javafx-sdk-21.0.10/lib/javafx.swing.jar">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/ASUS/Documents/SHANE/BSIT 2G-G2/SECOND SEMESTER/EVENT-DRIVEN PROGRAMMING/DRIVERS/JAVAFX DRIVERS/javafx-sdk-21.0.10/lib/javafx.web.jar">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/ASUS/Documents/SHANE/BSIT 2G-G2/SECOND SEMESTER/EVENT-DRIVEN PROGRAMMING/DRIVERS/JAVAFX DRIVERS/javafx-sdk-21.0.10/lib/javafx-swt.jar">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/ASUS/Documents/SHANE/BSIT 2G-G2/SECOND SEMESTER/EVENT-DRIVEN PROGRAMMING/DRIVERS/SQL DRIVERS/Extracted mssql sqljdbc_13.4/sqljdbc_13.4/enu/jars/mssql-jdbc-13.4.0.jre11.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
