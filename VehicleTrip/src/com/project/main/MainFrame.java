@@ -1,46 +1,50 @@
 package com.project.main;
 
-import java.awt.BorderLayout;
-import java.awt.CardLayout;
-
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-
-import com.admin.panel.TripPanel;
+import com.driver.panel.DriverData;
 import com.driver.panel.DriverUI;
 import com.passenger.panel.Passenger;
 import com.project.panel.LoginPanel;
+import com.project.util.CardPane;
+import com.project.util.FxUtil;
+import javafx.application.Application;
+import javafx.scene.Scene;
+import javafx.stage.Screen;
+import javafx.stage.Stage;
 
-public class MainFrame {
+public class MainFrame extends Application {
 
-	public static void main(String[] args) {
-		JFrame frame = new JFrame("Vehicle Trip Reservation System");
-		frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
-        frame.setSize(1200, 700);
-        frame.setLocationRelativeTo(null);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setLayout(new BorderLayout());
-        
-        CardLayout cardLayout = new CardLayout();
-        JPanel mainPanel = new JPanel(cardLayout);
+    public static CardPane mainPane;
 
-        DriverUI driverPanel = new DriverUI("Driver", cardLayout, mainPanel); 
-        Passenger passengerPanel = new Passenger("Guest", mainPanel, cardLayout);
-        
-        //nilipat ko dito
-        LoginPanel loginPanel = new LoginPanel(cardLayout, mainPanel, driverPanel);
-        
-        
+    @Override
+    public void start(Stage stage) {
+        mainPane = new CardPane();
 
-        mainPanel.add(loginPanel, "LOGIN");
-        mainPanel.add(driverPanel, "DRIVER");
-        mainPanel.add(passengerPanel, "PASSENGER");
+        // Driver panel (pre-created so LoginPanel can reference it)
+        DriverUI driverPanel = new DriverUI(mainPane);
 
-        frame.setContentPane(mainPanel);
-        frame.setVisible(true);
+        // Login
+        LoginPanel loginPanel = new LoginPanel(mainPane, driverPanel);
 
-        cardLayout.show(mainPanel, "LOGIN");
-	}
+        // Passenger (placeholder – LoginPanel replaces it per session)
+        Passenger passengerPlaceholder = new Passenger("Guest", mainPane);
 
+        mainPane.addCard("LOGIN",     loginPanel);
+        mainPane.addCard("DRIVER",    driverPanel);
+        mainPane.addCard("PASSENGER", passengerPlaceholder);
+        mainPane.show("LOGIN");
+
+        double w = Screen.getPrimary().getVisualBounds().getWidth();
+        double h = Screen.getPrimary().getVisualBounds().getHeight();
+        Scene scene = new Scene(mainPane, w, h);
+        scene.getStylesheets().add(FxUtil.CSS);
+
+        stage.setTitle("Vehicle Trip Reservation System – EduTRIP");
+        stage.setScene(scene);
+        stage.setMaximized(true);
+        stage.show();
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
 }
-

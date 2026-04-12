@@ -1,177 +1,132 @@
 package com.passenger.panel;
 
+import com.project.dbConnection.DbConnectMsSql;
+import com.project.util.CardPane;
+import com.project.util.FxUtil;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 
-import java.awt.BorderLayout;
-import java.awt.CardLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.GridLayout;
-import java.awt.Image;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
+public class Passenger extends BorderPane {
 
-import com.project.dbConnection.DbConnectMsSql;
+    private final String   username;
+    private final CardPane mainPane;
+    private final CardPane innerPane = new CardPane();
+    private       int      userId;
 
-public class Passenger extends JPanel {
+    private trips  tripsPanel;
+    private profile profilePanel;
 
-	private CardLayout cardLayout, layout;
-	private JPanel mainPanel, container;
-	private final String username;
-	private int userId;
+    public Passenger(String username, CardPane mainPane) {
+        this.username = username;
+        this.mainPane = mainPane;
+        this.userId   = getUserIdFromUsername(username);
+        setBackground(Background.fill(Color.WHITE));
+        createNavbar();
+        createPanels();
+    }
 
-	private trips tripsPanel;
-	private profile profilePanel;
-	private reservation reservationPanel;
+    private void createNavbar() {
+        HBox nav = new HBox();
+        nav.setBackground(Background.fill(Color.web("#141E32")));
+        nav.setAlignment(Pos.CENTER_LEFT);
+        nav.setPadding(new Insets(0, 20, 0, 0));
+        nav.setPrefHeight(60);
 
-	public Passenger(String username, JPanel container, CardLayout layout) {
-	    this.username = username;
-	    this.container = container;
-	    this.layout = layout;
-		this.userId = getUserIdFromUsername(username);
+        // Logo
+        ImageView logo;
+        try {
+            Image img = new Image(getClass().getResourceAsStream(
+                "/com/project/resources/companyLogo.png"), 80, 60, true, true);
+            logo = new ImageView(img);
+        } catch (Exception e) { logo = new ImageView(); }
+        logo.setFitWidth(80); logo.setFitHeight(60);
 
-		setLayout(new BorderLayout());
-		setPreferredSize(new Dimension(1000, 600));
+        HBox logoBox = new HBox(logo);
+        logoBox.setAlignment(Pos.CENTER);
+        logoBox.setPadding(new Insets(0, 10, 0, 0));
 
-		createNavbar();
-		createPanels();
-	}
+        String btnStyle =
+            "-fx-text-fill:white;-fx-background-color:transparent;" +
+            "-fx-font-weight:bold;-fx-font-size:16px;" +
+            "-fx-pref-width:150px;-fx-pref-height:60px;" +
+            "-fx-cursor:hand;-fx-border-width:0;";
 
-	private void createNavbar() {
+        Button dashboard   = navButton("Dashboard",   btnStyle);
+        Button reservation = navButton("Reservation", btnStyle);
+        Button trips       = navButton("Trips",       btnStyle);
+        Button profile     = navButton("Profile",     btnStyle);
+        Button logout      = navButton("Logout",      btnStyle);
 
-		JPanel nav = new JPanel(new BorderLayout());
-		nav.setBackground(new Color(20, 30, 50));
+        dashboard.setOnAction(e   -> innerPane.show("dashboard"));
+        reservation.setOnAction(e -> innerPane.show("reservation"));
+        trips.setOnAction(e -> {
+            tripsPanel.resetToPending();
+            innerPane.show("trips");
+        });
+        profile.setOnAction(e -> {
+            profilePanel.loadProfile(userId);
+            innerPane.show("profile");
+        });
+        logout.setOnAction(e -> {
+            if (FxUtil.confirm(this, "Are you sure you want to Logout?", "Confirm")) {
+                insertAuditLog(userId, "Logged Out");
+                mainPane.show("LOGIN");
+            }
+        });
 
-		
-		ImageIcon logoIcon = new ImageIcon(getClass().getResource("/com/project/resources/companyLogo.png"));
-		Image img = logoIcon.getImage().getScaledInstance(80, 60, Image.SCALE_SMOOTH);
-		JLabel logo = new JLabel(new ImageIcon(img));
+        nav.getChildren().addAll(logoBox, dashboard, reservation, trips, profile, logout);
+        setTop(nav);
+    }
 
-		JPanel logoPanel = new JPanel();
-		logoPanel.setBackground(new Color(20, 30, 50));
-		logoPanel.add(logo);
+    private void createPanels() {
+        home        homePanel     = new home(username, innerPane);
+        tripsPanel                = new trips(userId);
+        profilePanel              = new profile(userId);
+        reservation reservPanel   = new reservation(innerPane, tripsPanel, userId);
 
-		JPanel buttonPanel = new JPanel(new GridLayout(1, 5, 20, 0));
-		buttonPanel.setBackground(new Color(20, 30, 50));
+        innerPane.addCard("dashboard",   homePanel);
+        innerPane.addCard("trips",       tripsPanel);
+        innerPane.addCard("profile",     profilePanel);
+        innerPane.addCard("reservation", reservPanel);
+        innerPane.show("dashboard");
+        setCenter(innerPane);
+    }
 
-		JButton dashboard = new JButton("Dashboard");
-		JButton reservation = new JButton("Reservation");
-		JButton trips = new JButton("Trips");
-		JButton profile = new JButton("Profile");
-		JButton logout = new JButton("Logout");
+    private Button navButton(String text, String style) {
+        Button b = new Button(text);
+        b.setStyle(style);
+        b.setOnMouseEntered(e -> b.setStyle(style + "-fx-background-color:rgba(255,255,255,0.10);"));
+        b.setOnMouseExited(e  -> b.setStyle(style));
+        return b;
+    }
 
-		JButton[] buttons = { dashboard, reservation, trips, profile, logout };
+    private int getUserIdFromUsername(String uname) {
+        try {
+            DbConnectMsSql db = new DbConnectMsSql();
+            Connection c = db.conn;
+            PreparedStatement ps = c.prepareStatement("SELECT user_id FROM Users WHERE username=?");
+            ps.setString(1, uname);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getInt("user_id");
+        } catch (Exception e) { e.printStackTrace(); }
+        return -1;
+    }
 
-		for (JButton b : buttons) {
-			b.setForeground(Color.WHITE);
-			b.setBackground(new Color(20, 30, 50));
-			b.setBorderPainted(false);
-			b.setFocusPainted(false);
-			b.setFont(new Font("Segoe UI", Font.BOLD, 18));
-			b.setPreferredSize(new Dimension(150, 60));
-			b.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-
-			buttonPanel.add(b);
-		}
-
-		dashboard.addActionListener(e -> cardLayout.show(mainPanel, "dashboard"));
-
-		reservation.addActionListener(e -> {
-			cardLayout.show(mainPanel, "reservation");
-		});
-
-		trips.addActionListener(e -> {
-			tripsPanel.resetToPending();
-			cardLayout.show(mainPanel, "trips");
-		});
-
-		profile.addActionListener(e -> {
-			profilePanel.loadProfile(userId);
-			cardLayout.show(mainPanel, "profile");
-		});
-
-		logout.addActionListener(e -> {
-		    int choice = JOptionPane.showConfirmDialog(null,
-		            "Are you sure you want to Logout?",
-		            "Confirm",
-		            JOptionPane.YES_NO_OPTION);
-
-		    if (choice == JOptionPane.YES_OPTION) {
-		        insertAuditLog(userId, "Logged Out");
-		        layout.show(container, "LOGIN");
-		    }
-		});
-		
-		nav.add(logoPanel, BorderLayout.WEST);
-		nav.add(buttonPanel, BorderLayout.CENTER);
-
-		add(nav, BorderLayout.NORTH);
-	}
-
-	private void createPanels() {
-
-		cardLayout = new CardLayout();
-		mainPanel = new JPanel(cardLayout);
-
-		// Dashboard
-		mainPanel.add(new home(username, mainPanel, cardLayout), "dashboard");
-
-		// Trips
-		tripsPanel = new trips(userId);
-		mainPanel.add(tripsPanel, "trips");
-
-		// Profile
-		profilePanel = new profile(userId);
-		mainPanel.add(profilePanel, "profile");
-
-		// Reservation
-		reservationPanel = new reservation(cardLayout, mainPanel, tripsPanel, this.userId);
-		mainPanel.add(reservationPanel, "reservation");
-
-		add(mainPanel, BorderLayout.CENTER);
-	}
-
-	private int getUserIdFromUsername(String username) {
-		int id = -1;
-
-		try {
-			DbConnectMsSql db = new DbConnectMsSql();
-			Connection conn = db.conn;
-
-			String sql = "SELECT user_id FROM Users WHERE username = ?";
-			PreparedStatement ps = conn.prepareStatement(sql);
-			ps.setString(1, username);
-
-			ResultSet rs = ps.executeQuery();
-
-			if (rs.next()) {
-				id = rs.getInt("user_id");
-			}
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		return id;
-	}
-	
-	private void insertAuditLog(int userId, String status) {
-	    try {
-	        DbConnectMsSql db = new DbConnectMsSql();
-	        java.sql.PreparedStatement ps = db.conn.prepareStatement(
-	            "INSERT INTO Audit_Log (user_id, log_status) VALUES (?, ?)");
-	        ps.setInt(1, userId);
-	        ps.setString(2, status);
-	        ps.executeUpdate();
-	    } catch (Exception e) {
-	        e.printStackTrace();
-	    }
-	}
+    private void insertAuditLog(int uid, String status) {
+        try {
+            DbConnectMsSql db = new DbConnectMsSql();
+            PreparedStatement ps = db.conn.prepareStatement(
+                "INSERT INTO Audit_Log (user_id, log_status) VALUES (?, ?)");
+            ps.setInt(1, uid); ps.setString(2, status); ps.executeUpdate();
+        } catch (Exception e) { e.printStackTrace(); }
+    }
 }

@@ -1,225 +1,127 @@
 package com.admin.panel;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
+import com.project.dbConnection.DbConnectMsSql;
+import com.project.util.FxUtil;
+import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
-import javax.swing.Box;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.SwingConstants;
-import javax.swing.border.EmptyBorder;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
+public class AuditLogPanel extends BorderPane {
 
-import com.project.customSwing.TableStyleUtil;
-import com.project.dbConnection.DbConnectMsSql;
-
-public class AuditLogPanel extends JPanel {
-
-    private JTable table;
-    private DefaultTableModel model;
-    private JComboBox<String> cmbMonth;
-    private JComboBox<String> cmbYear;
+    private ObservableList<Object[]> tableData;
+    private TableView<Object[]> table;
+    private ComboBox<String> cmbMonth;
+    private ComboBox<String> cmbYear;
     private Connection conn;
-
-    private static final Color BLUE       = new Color(0, 150, 199);
-    private static final Color WHITE      = Color.WHITE;
-    private static final Font  LABEL_FONT = new Font("Segoe UI", Font.PLAIN, 13);
 
     public AuditLogPanel() {
         DbConnectMsSql db = new DbConnectMsSql();
         conn = db.conn;
-        setLayout(new BorderLayout());
-        setBackground(WHITE);
-        setBorder(new EmptyBorder(20, 30, 20, 30));
+        setBackground(Background.fill(Color.WHITE));
+        setPadding(new Insets(20, 30, 20, 30));
         buildUI();
         loadYears();
         loadLogs("All", "All", -1);
     }
 
     private void buildUI() {
+        // ── Filter bar ───────────────────────────────────────────────────────
+        HBox filterBar = new HBox(8);
+        filterBar.setAlignment(Pos.CENTER_LEFT);
+        filterBar.setPadding(new Insets(0, 0, 10, 0));
 
-        
-        JPanel top = new JPanel(new BorderLayout());
-        top.setBackground(WHITE);
-        top.setBorder(new EmptyBorder(0, 0, 10, 0));
-
-        JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        filterPanel.setBackground(WHITE);
-
-        JLabel lblMonth = new JLabel("Month:"); lblMonth.setFont(LABEL_FONT);
-        cmbMonth = new JComboBox<>(new String[]{
+        cmbMonth = FxUtil.styledCombo(javafx.collections.FXCollections.observableArrayList(
             "All","January","February","March","April","May","June",
-            "July","August","September","October","November","December"
-        });
-        cmbMonth.setPreferredSize(new Dimension(120, 30));
+            "July","August","September","October","November","December"));
+        cmbMonth.setValue("All");
+        cmbMonth.setPrefWidth(120);
 
-        JLabel lblYear = new JLabel("Year:"); lblYear.setFont(LABEL_FONT);
-        cmbYear = new JComboBox<>();
-        cmbYear.setPreferredSize(new Dimension(90, 30));
+        cmbYear = new ComboBox<>();
+        cmbYear.getStyleClass().add("combo-field");
+        cmbYear.setPrefWidth(90);
 
-        JButton btnFilter = new JButton("Filter");
-        styleButtonFilled(btnFilter, BLUE);
-        btnFilter.addActionListener(e -> loadLogs(
-            cmbMonth.getSelectedItem().toString(),
-            cmbYear.getSelectedItem().toString(), -1));
+        Button btnFilter = FxUtil.btnPrimary("Filter");
+        btnFilter.setOnAction(e -> loadLogs(
+            cmbMonth.getValue(), cmbYear.getValue(), -1));
 
-        filterPanel.add(lblMonth);
-        filterPanel.add(cmbMonth);
-        filterPanel.add(Box.createHorizontalStrut(8));
-        filterPanel.add(lblYear);
-        filterPanel.add(cmbYear);
-        filterPanel.add(Box.createHorizontalStrut(8));
-        filterPanel.add(btnFilter);
-
-        JPanel refreshPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
-        refreshPanel.setBackground(WHITE);
-        JButton btnRefresh = new JButton("Refresh");
-        styleButtonFilled(btnRefresh, BLUE);
-        btnRefresh.addActionListener(e -> {
-            cmbMonth.setSelectedIndex(0);
-            cmbYear.setSelectedIndex(0);
+        Button btnRefresh = FxUtil.btnPrimary("Refresh");
+        btnRefresh.setOnAction(e -> {
+            cmbMonth.setValue("All"); cmbYear.getSelectionModel().selectFirst();
             loadLogs("All", "All", -1);
         });
-        refreshPanel.add(btnRefresh);
 
-        top.add(filterPanel,  BorderLayout.WEST);
-        top.add(refreshPanel, BorderLayout.EAST);
+        filterBar.getChildren().addAll(
+            new Label("Month:"), cmbMonth,
+            FxUtil.hspacer(8), new Label("Year:"), cmbYear,
+            FxUtil.hspacer(8), btnFilter,
+            FxUtil.hgrow(), btnRefresh
+        );
 
-        //Table
-        String[] cols = {"Log ID", "User", "Date", "Status"};
-        model = new DefaultTableModel(cols, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
-        };
-        table = new JTable(model);
-        
-        TableStyleUtil.applyStyle(table);
-        
-        DefaultTableCellRenderer customRenderer = new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable t, Object val,
-                    boolean sel, boolean foc, int row, int col) {
+        // ── Table ────────────────────────────────────────────────────────────
+        table = FxUtil.buildTable("Log ID", "User", "Date", "Status");
+        FxUtil.applyStatusRenderer(table, 3);
+        tableData = FxUtil.tableData(table);
 
-                Component c = super.getTableCellRendererComponent(t, val, sel, foc, row, col);
-
-                setHorizontalAlignment(SwingConstants.LEFT);
-
-                if (!sel) {
-                    c.setBackground(row % 2 == 0 ? Color.WHITE : new Color(245, 248, 252));
-                }
-
-                if (col == 3 && val != null) {
-                    String status = val.toString();
-
-                    c.setFont(new Font("Segoe UI", Font.BOLD, 13));
-
-                    if (status.equalsIgnoreCase("Logged in")) {
-                        c.setForeground(new Color(39, 174, 96)); // GREEN
-                    } else {
-                        c.setForeground(new Color(220, 53, 69)); // RED
-                    }
-                } else {
-                    c.setForeground(Color.BLACK);
-                    c.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-                }
-
-                return c;
-            }
-        };
-
-        //APPLY RENDERER
-        table.getColumnModel().getColumn(3).setCellRenderer(customRenderer);
-        
-        JScrollPane scroll = TableStyleUtil.modernScroll(table);
-
-        
-        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 5));
-        bottom.setBackground(WHITE);
-
-        JButton btnShowLogs = new JButton("Show Logs for Selected User");
-        styleButtonFilled(btnShowLogs, BLUE);
-        btnShowLogs.addActionListener(e -> {
-            int row = table.getSelectedRow();
-            if (row == -1) {
-                JOptionPane.showMessageDialog(this, "Select a log row first to filter by user.");
-                return;
-            }
-            // Get user_id from DB using the log_id in col 0
-            int logId = (int) model.getValueAt(row, 0);
+        // ── Bottom bar ───────────────────────────────────────────────────────
+        Button btnShowUser = FxUtil.btnPrimary("Show Logs for Selected User");
+        btnShowUser.setOnAction(e -> {
+            Object[] row = table.getSelectionModel().getSelectedItem();
+            if (row == null) { FxUtil.showInfo(this, "Select a log row first."); return; }
+            int logId = (int) row[0];
             try {
                 PreparedStatement ps = conn.prepareStatement(
                     "SELECT user_id FROM Audit_Log WHERE log_id=?");
                 ps.setInt(1, logId);
                 ResultSet rs = ps.executeQuery();
                 if (rs.next()) {
-                    int userId = rs.getInt("user_id");
-                    cmbMonth.setSelectedIndex(0);
-                    cmbYear.setSelectedIndex(0);
-                    loadLogs("All", "All", userId);
+                    cmbMonth.setValue("All"); cmbYear.getSelectionModel().selectFirst();
+                    loadLogs("All", "All", rs.getInt("user_id"));
                 }
             } catch (Exception ex) { ex.printStackTrace(); }
         });
-        bottom.add(btnShowLogs);
 
-        add(top,    BorderLayout.NORTH);
-        add(scroll, BorderLayout.CENTER);
-        add(bottom, BorderLayout.SOUTH);
-    }
+        HBox bottom = new HBox(btnShowUser);
+        bottom.setAlignment(Pos.CENTER_RIGHT);
+        bottom.setPadding(new Insets(8, 0, 0, 0));
 
-    private void styleButtonFilled(JButton btn, Color bg) {
-        btn.setBackground(bg);
-        btn.setForeground(WHITE);
-        btn.setFocusPainted(false);
-        btn.setBorderPainted(false);
-        btn.setOpaque(true);
-        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        setTop(filterBar);
+        setCenter(FxUtil.tableScroll(table));
+        setBottom(bottom);
     }
 
     private void loadYears() {
         try {
-            cmbYear.removeAllItems();
-            cmbYear.addItem("All");
+            cmbYear.getItems().clear();
+            cmbYear.getItems().add("All");
             PreparedStatement ps = conn.prepareStatement(
                 "SELECT DISTINCT YEAR(log_date) AS yr FROM Audit_Log ORDER BY yr DESC");
             ResultSet rs = ps.executeQuery();
-            while (rs.next()) cmbYear.addItem(String.valueOf(rs.getInt("yr")));
+            while (rs.next()) cmbYear.getItems().add(String.valueOf(rs.getInt("yr")));
+            cmbYear.setValue("All");
         } catch (Exception e) { e.printStackTrace(); }
     }
 
-    
     private void loadLogs(String month, String year, int userId) {
         try {
-            model.setRowCount(0);
+            tableData.clear();
             StringBuilder sql = new StringBuilder(
-                "SELECT al.log_id, u.first_name + ' ' + u.last_name AS full_name, " +
-                "al.log_date, al.log_status " +
-                "FROM Audit_Log al " +
-                "JOIN Users u ON al.user_id = u.user_id " +
-                "WHERE 1=1 "
-            );
-            if (!month.equals("All")) sql.append(" AND MONTH(al.log_date) = ").append(monthToInt(month));
-            if (!year.equals("All"))  sql.append(" AND YEAR(al.log_date) = ").append(year);
-            if (userId != -1)         sql.append(" AND al.user_id = ").append(userId);
+                "SELECT al.log_id, u.first_name+' '+u.last_name AS full_name," +
+                " al.log_date, al.log_status " +
+                "FROM Audit_Log al JOIN Users u ON al.user_id=u.user_id WHERE 1=1");
+            if (!"All".equals(month)) sql.append(" AND MONTH(al.log_date)=").append(monthToInt(month));
+            if (year != null && !"All".equals(year)) sql.append(" AND YEAR(al.log_date)=").append(year);
+            if (userId != -1) sql.append(" AND al.user_id=").append(userId);
             sql.append(" ORDER BY al.log_date DESC");
-
-            PreparedStatement ps = conn.prepareStatement(sql.toString());
-            ResultSet rs = ps.executeQuery();
+            ResultSet rs = conn.prepareStatement(sql.toString()).executeQuery();
             while (rs.next()) {
-                model.addRow(new Object[]{
+                tableData.add(new Object[]{
                     rs.getInt("log_id"),
                     rs.getString("full_name"),
                     rs.getTimestamp("log_date"),
@@ -229,15 +131,13 @@ public class AuditLogPanel extends JPanel {
         } catch (Exception e) { e.printStackTrace(); }
     }
 
-    private int monthToInt(String month) {
-        switch (month) {
-            case "January":   return 1;  case "February":  return 2;
-            case "March":     return 3;  case "April":     return 4;
-            case "May":       return 5;  case "June":      return 6;
-            case "July":      return 7;  case "August":    return 8;
-            case "September": return 9;  case "October":   return 10;
-            case "November":  return 11; case "December":  return 12;
-            default: return 0;
-        }
+    private int monthToInt(String m) {
+        return switch (m) {
+            case "January" -> 1; case "February" -> 2; case "March"    -> 3;
+            case "April"   -> 4; case "May"      -> 5; case "June"     -> 6;
+            case "July"    -> 7; case "August"   -> 8; case "September"-> 9;
+            case "October" ->10; case "November" ->11; case "December" ->12;
+            default -> 0;
+        };
     }
 }

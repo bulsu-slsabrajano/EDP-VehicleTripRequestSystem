@@ -1,194 +1,126 @@
 package com.driver.panel;
 
-import java.awt.BorderLayout;
-import java.awt.CardLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.Image;
+import com.project.dbConnection.DbConnectMsSql;
+import com.project.util.CardPane;
+import com.project.util.FxUtil;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+
 import java.sql.PreparedStatement;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
+public class DriverUI extends BorderPane {
 
-import com.project.customSwing.GradientPanel;
-import com.project.dbConnection.DbConnectMsSql;
+    private final CardPane      mainPane;
+    private final CardPane      contentPane = new CardPane();
+    private final Button[]      navButtons  = new Button[5];
 
-
-public class DriverUI extends JPanel {
-
-    CardLayout cardLayout = new CardLayout();
-    JPanel contentPanel = new JPanel(cardLayout);
-
-    private JButton[] navButtons;
-    private JButton[] logout;
-    
-    public HomePanel homePanel;
-    private AssignmentPanel assignmentPanel;
-    private VehiclePanel vehiclePanel;
-    private TripPanel tripPanel;
-    private RatingPanel ratingPanel;
+    public  HomePanel         homePanel;
+    private AssignmentPanel   assignmentPanel;
+    private VehiclePanel      vehiclePanel;
+    private TripPanel         tripPanel;
+    private RatingPanel       ratingPanel;
     private DriverProfilePanel profilePanel;
 
-    private CardLayout mainCardLayout;
-    private JPanel mainPanel;
- 
-    public DriverUI(String username, CardLayout mainCardLayout, JPanel mainPanel) {
-    	this.mainCardLayout = mainCardLayout;
-        this.mainPanel      = mainPanel;
-        
-    	setLayout(new BorderLayout());
-    	
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(Color.WHITE);
-        
-        ImageIcon logoIcon = new ImageIcon(getClass().getResource("/com/project/resources/companyLogo.png"));
-        Image scaledLogo = logoIcon.getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH);
-        JLabel logoLabel = new JLabel(new ImageIcon(scaledLogo));
-        logoLabel.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 5));
+    public DriverUI(CardPane mainPane) {
+        this.mainPane = mainPane;
+        setBackground(Background.fill(Color.WHITE));
+        buildUI();
+    }
 
-        JLabel titleLabel = new JLabel("EduTrip");
-        titleLabel.setFont(new Font("Segoe UI Symbol", Font.BOLD, 24));
-        titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 10));
-        
-        JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        titlePanel.setBackground(Color.WHITE);
-        titlePanel.add(logoLabel);
-        titlePanel.add(titleLabel);
+    private void buildUI() {
+        // ── Header bar ───────────────────────────────────────────────────────
+        HBox header = new HBox();
+        header.setBackground(Background.fill(Color.WHITE));
+        header.setAlignment(Pos.CENTER_LEFT);
+        header.setPadding(new Insets(5, 10, 5, 15));
 
-        JPanel headerRightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
-        headerRightPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 10));
-        headerRightPanel.setOpaque(false);
-        
-        //logout button
-        JButton logout = new JButton("Log Out");
-        logout.setBackground(Color.RED);
-        logout.setForeground(Color.WHITE);
-        logout.setFocusPainted(false);
-        logout.setBorderPainted(false);
-        logout.setOpaque(true);
-        logout.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        logout.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        ImageView logoImg;
+        try {
+            Image img = new Image(getClass().getResourceAsStream(
+                    "/com/project/resources/companyLogo.png"), 40, 40, true, true);
+            logoImg = new ImageView(img);
+        } catch (Exception e) { logoImg = new ImageView(); }
+        logoImg.setFitWidth(40); logoImg.setFitHeight(40);
 
-        logout.addActionListener(e -> {
-            int confirm = JOptionPane.showConfirmDialog(
-                this,
-                "Are you sure you want to logout?",
-                "Logout Confirmation",
-                JOptionPane.YES_NO_OPTION
-            );
-            if (confirm == JOptionPane.YES_OPTION) {
+        Label titleLbl = new Label("EduTrip");
+        titleLbl.setStyle("-fx-font-weight:bold;-fx-font-size:24px;-fx-padding:0 0 0 6px;");
+
+        HBox brand = new HBox(6, logoImg, titleLbl);
+        brand.setAlignment(Pos.CENTER_LEFT);
+
+        Button profileBtn = new Button("👤");
+        profileBtn.getStyleClass().add("profile-icon-btn");
+        profileBtn.setOnAction(e -> {
+            if (DriverData.driverId != 0) profilePanel.loadProfile(DriverData.driverId);
+            contentPane.show("PROFILE");
+            clearActiveNav();
+        });
+
+        Button logoutBtn = FxUtil.btnDanger("Log Out");
+        logoutBtn.setOnAction(e -> {
+            if (FxUtil.confirm(this, "Are you sure you want to logout?", "Logout Confirmation")) {
                 insertAuditLog(DriverData.driverId, "Logged Out");
-
                 DriverData.driverId          = 0;
                 DriverData.username          = null;
                 DriverData.selectedVehicleId = null;
-
-                if (mainCardLayout != null && mainPanel != null) {
-                    mainCardLayout.show(mainPanel, "LOGIN");
-                }
+                mainPane.show("LOGIN");
             }
         });
 
-       
-        JButton profileBtn = iconButton("👤");
-        
-        profileBtn.addActionListener(e -> {
-            if (DriverData.driverId != 0) {
-                profilePanel.loadProfile(DriverData.driverId);
-            }
-            cardLayout.show(contentPanel, "PROFILE");
-        });
-        
-        headerRightPanel.add(profileBtn);
-        headerRightPanel.add(logout);
+        HBox rightBar = new HBox(10, profileBtn, logoutBtn);
+        rightBar.setAlignment(Pos.CENTER_RIGHT);
+        rightBar.setPadding(new Insets(0, 10, 0, 0));
 
-        headerPanel.add(titlePanel, BorderLayout.WEST);
-        headerPanel.add(headerRightPanel, BorderLayout.EAST);
+        header.getChildren().addAll(brand, FxUtil.hgrow(), rightBar);
 
+        // ── Navigation bar ────────────────────────────────────────────────────
+        HBox navBar = new HBox(0);
+        navBar.getStyleClass().add("gradient-panel");
+        navBar.setPrefHeight(45);
+        navBar.setAlignment(Pos.CENTER_LEFT);
+        navBar.setPadding(new Insets(0, 30, 0, 30));
 
-        GradientPanel navPanel = new GradientPanel();
-        navPanel.setLayout(new BoxLayout(navPanel, BoxLayout.X_AXIS));
-        navPanel.setPreferredSize(new Dimension(0, 45));
-        
-        JButton btnHome = createNavButton("HOME");
-        JButton btnAssignment = createNavButton("ASSIGNMENTS");
-        JButton btnVehicle = createNavButton("VEHICLE");
-        JButton btnTrips = createNavButton("TRIPS");
-        JButton btnRatings = createNavButton("RATINGS");
+        String[] navLabels = {"HOME", "ASSIGNMENTS", "VEHICLE", "TRIPS", "RATINGS"};
+        String[] navCards  = {"HOME", "ASSIGNMENTS", "VEHICLE", "TRIPS", "RATINGS"};
 
-        navButtons = new JButton[] {
-                btnHome,
-                btnAssignment,
-                btnVehicle,
-                btnTrips,
-                btnRatings
-        };
-        
-        
-        navPanel.add(Box.createRigidArea(new Dimension(30, 0)));
-        navPanel.add(btnHome);
-        navPanel.add(Box.createRigidArea(new Dimension(30, 0)));
-        navPanel.add(btnAssignment);
-        navPanel.add(Box.createRigidArea(new Dimension(30, 0)));
-        navPanel.add(btnVehicle);
-        navPanel.add(Box.createRigidArea(new Dimension(30, 0)));
-        navPanel.add(btnTrips);
-        navPanel.add(Box.createRigidArea(new Dimension(30, 0)));
-        navPanel.add(btnRatings);
-        navPanel.add(Box.createRigidArea(new Dimension(30, 0)));
+        for (int i = 0; i < navLabels.length; i++) {
+            final int idx = i;
+            Button btn = new Button(navLabels[i]);
+            btn.getStyleClass().addAll("topnav-btn");
+            btn.setOnAction(e -> {
+                contentPane.show(navCards[idx]);
+                setActiveNav(idx);
+            });
+            navButtons[i] = btn;
+            navBar.getChildren().add(btn);
+        }
 
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.add(headerPanel, BorderLayout.NORTH);
-        topPanel.add(navPanel, BorderLayout.SOUTH);
-        
-        add(topPanel, BorderLayout.NORTH);
-        
-        homePanel       = new HomePanel(username);
+        VBox topSection = new VBox(header, navBar);
+
+        // ── Content panels ────────────────────────────────────────────────────
+        homePanel       = new HomePanel(DriverData.username);
         assignmentPanel = new AssignmentPanel();
         vehiclePanel    = new VehiclePanel();
-        tripPanel       = new TripPanel(username);
+        tripPanel       = new TripPanel(DriverData.username);
         ratingPanel     = new RatingPanel();
-        profilePanel = new DriverProfilePanel();
-      
-        contentPanel.add(homePanel, "HOME");
-        contentPanel.add(assignmentPanel, "ASSIGNMENTS");
-        contentPanel.add(vehiclePanel, "VEHICLE");
-        contentPanel.add(tripPanel, "TRIPS");
-        contentPanel.add(ratingPanel, "RATINGS");
-        contentPanel.add(profilePanel, "PROFILE");
+        profilePanel    = new DriverProfilePanel();
 
-        add(contentPanel, BorderLayout.CENTER);
+        contentPane.addCard("HOME",        homePanel);
+        contentPane.addCard("ASSIGNMENTS", assignmentPanel);
+        contentPane.addCard("VEHICLE",     vehiclePanel);
+        contentPane.addCard("TRIPS",       tripPanel);
+        contentPane.addCard("RATINGS",     ratingPanel);
+        contentPane.addCard("PROFILE",     profilePanel);
+        contentPane.show("HOME");
 
-        btnHome.addActionListener(e -> {
-            cardLayout.show(contentPanel, "HOME");
-            setActiveNav(0);
-        });
-        btnAssignment.addActionListener(e ->{
-            cardLayout.show(contentPanel, "ASSIGNMENTS");
-            setActiveNav(1);
-         });
-        btnVehicle.addActionListener(e -> {
-            cardLayout.show(contentPanel, "VEHICLE");
-            setActiveNav(2);
-        });
-        btnTrips.addActionListener(e -> {
-            cardLayout.show(contentPanel, "TRIPS");
-            setActiveNav(3);
-        });
-        btnRatings.addActionListener(e -> {
-            cardLayout.show(contentPanel, "RATINGS");
-            setActiveNav(4);
-        });
+        setTop(topSection);
+        setCenter(contentPane);
         setActiveNav(0);
     }
 
@@ -201,46 +133,17 @@ public class DriverUI extends JPanel {
         profilePanel.loadProfile(DriverData.driverId);
     }
 
-    public void setActiveNav(int activeIdx) {
+    private void setActiveNav(int activeIdx) {
         for (int i = 0; i < navButtons.length; i++) {
-            if (i == activeIdx) {
-                navButtons[i].setBackground(Color.LIGHT_GRAY);
-                navButtons[i].setForeground(Color.BLACK);
-                navButtons[i].setFont(new Font("Arial", Font.BOLD, 14));
-                navButtons[i].setOpaque(true);
-            } else {
-                navButtons[i].setBackground(Color.YELLOW);
-                navButtons[i].setForeground(Color.WHITE);
-                navButtons[i].setFont(new Font("Arial", Font.BOLD, 14));
-                navButtons[i].setOpaque(false);
-            }
+            navButtons[i].getStyleClass().removeAll("topnav-btn-active");
+            if (i == activeIdx) navButtons[i].getStyleClass().add("topnav-btn-active");
         }
     }
 
-
-    public JButton iconButton(String s) {
-        JButton btn = new JButton(s);
-        btn.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
-        btn.setFocusPainted(false);
-        btn.setBorderPainted(false);
-        btn.setContentAreaFilled(false);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        return btn;
+    private void clearActiveNav() {
+        for (Button b : navButtons) b.getStyleClass().remove("topnav-btn-active");
     }
 
-    public JButton createNavButton(String text) {
-        JButton btn = new JButton(text);
-        btn.setOpaque(false);
-        btn.setFocusPainted(false);
-        //btn.setBackground(Color.YELLOW);
-        btn.setBorderPainted(false);
-        btn.setFont(new Font("Arial", Font.BOLD, 14));
-        btn.setForeground(Color.WHITE);
-        btn.setSelected(true);
-        btn.setAlignmentY(Component.CENTER_ALIGNMENT);
-        return btn;
-    }
-    
     private void insertAuditLog(int userId, String status) {
         try {
             DbConnectMsSql db = new DbConnectMsSql();
@@ -249,8 +152,6 @@ public class DriverUI extends JPanel {
             ps.setInt(1, userId);
             ps.setString(2, status);
             ps.executeUpdate();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) { e.printStackTrace(); }
     }
 }

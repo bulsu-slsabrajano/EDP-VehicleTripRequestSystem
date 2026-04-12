@@ -13,7 +13,7 @@ public class DbConnectMsSql {
 	}
 	
 	private void connectDatabase() {
-		String url = "jdbc:sqlserver://01-ABRAJANO\\SQLEXPRESS:1433;databaseName=VehicleTripRequestSystemDb;encrypt=true;trustServerCertificate=true";
+		String url = "jdbc:sqlserver://vanguard\\SQLEXPRESS:1433;databaseName=VehicleTripRequestSystemDb;encrypt=true;trustServerCertificate=true";
 		String user = "vtrs_dbuser";
 		String password = "Db#Vtrs_1234!";
 		

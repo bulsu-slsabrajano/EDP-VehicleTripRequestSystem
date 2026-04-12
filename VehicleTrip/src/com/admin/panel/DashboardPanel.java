@@ -1,63 +1,38 @@
 package com.admin.panel;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.GridLayout;
-import java.sql.CallableStatement;
+import com.project.dbConnection.DbConnectMsSql;
+import com.project.util.FxUtil;
+import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.SwingConstants;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
+public class DashboardPanel extends VBox {
 
-import com.project.customSwing.ShadowPanel;
-import com.project.customSwing.TableStyleUtil;
-import com.project.dbConnection.DbConnectMsSql;
-
-public class DashboardPanel extends JPanel {
-
-    private JLabel lblUsers, lblDrivers, lblVehicles, lblTotalTrips;
-    private JLabel lblPendingStatus, lblApprovedStatus, lblCompletedStatus, lblCancelledStatus;
-    private JLabel lblWelcome;
-    private DefaultTableModel model;
+    private Label lblUsers, lblDrivers, lblVehicles, lblTotalTrips;
+    private Label lblPending, lblApproved, lblCompleted, lblCancelled;
+    private Label lblWelcome;
+    private ObservableList<Object[]> tableData;
     private Connection conn;
     private int loggedInUserId = -1;
-
-    
-    private static final Color BLUE        = new Color(0, 150, 199);   
-    private static final Color GREEN       = new Color(39, 174, 96);    
-    private static final Color ORANGE      = new Color(230, 126, 34);   
-    private static final Color RED         = new Color(220, 53, 69);    
-    private static final Color WHITE       = Color.WHITE;
-    private static final Font  LABEL_FONT  = new Font("Segoe UI", Font.PLAIN, 13);
-    private static final Font  TITLE_FONT  = new Font("Segoe UI", Font.BOLD, 20);
 
     public DashboardPanel() {
         DbConnectMsSql db = new DbConnectMsSql();
         conn = db.conn;
-        setLayout(new BorderLayout());
-        setBackground(WHITE);
-        topPanel();
-        centerPanel();
-        loadDashboard();
+        setBackground(Background.fill(Color.WHITE));
+        setPadding(new Insets(15, 30, 20, 30));
+        setSpacing(0);
+        buildUI();
     }
 
-    
-    public void setLoggedInUserId(int userId) {
-        this.loggedInUserId = userId;
+    public void setLoggedInUserId(int id) {
+        this.loggedInUserId = id;
         loadWelcomeName();
     }
 
@@ -65,233 +40,170 @@ public class DashboardPanel extends JPanel {
         if (loggedInUserId == -1 || lblWelcome == null) return;
         try {
             PreparedStatement ps = conn.prepareStatement(
-                "SELECT first_name FROM Users WHERE user_id=?");
+                    "SELECT first_name FROM Users WHERE user_id=?");
             ps.setInt(1, loggedInUserId);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) lblWelcome.setText("Welcome, " + rs.getString("first_name") + "!");
         } catch (Exception e) { e.printStackTrace(); }
     }
 
-    private void topPanel() {
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setBackground(WHITE);
-        topPanel.setBorder(BorderFactory.createEmptyBorder(15, 30, 5, 30));
+    private void buildUI() {
+        // ── Top bar ─────────────────────────────────────────────────────────
+        HBox topBar = new HBox();
+        topBar.setAlignment(Pos.CENTER_LEFT);
+        topBar.setPadding(new Insets(0, 0, 10, 0));
 
-        lblWelcome = new JLabel("Welcome!");
-        lblWelcome.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        lblWelcome.setForeground(Color.BLACK);
+        lblWelcome = new Label("Welcome!");
+        lblWelcome.getStyleClass().add("welcome-title");
+        HBox.setHgrow(lblWelcome, Priority.ALWAYS);
 
-        JPanel rightWrapper = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        rightWrapper.setBackground(WHITE);
+        Button btnRefresh = FxUtil.btnPrimary("Refresh");
+        btnRefresh.setOnAction(e -> loadDashboard());
+        topBar.getChildren().addAll(lblWelcome, btnRefresh);
 
-        JButton btnRefresh = new JButton("Refresh");
-        btnRefresh.setFocusPainted(false);
-        btnRefresh.setBackground(BLUE);
-        btnRefresh.setForeground(WHITE);
-        btnRefresh.setBorderPainted(false);
-        btnRefresh.setOpaque(true);
-        btnRefresh.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnRefresh.setPreferredSize(new Dimension(120, 36));
-        btnRefresh.setFont(new Font("Segoe UI Emoji", Font.BOLD, 13));
-        btnRefresh.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent e) { btnRefresh.setBackground(new Color(0, 120, 165)); }
-            public void mouseExited(java.awt.event.MouseEvent e)  { btnRefresh.setBackground(BLUE); }
-        });
-        btnRefresh.addActionListener(e -> loadDashboard());
+        // ── Summary cards ────────────────────────────────────────────────────
+        lblUsers      = new Label("0");
+        lblDrivers    = new Label("0");
+        lblVehicles   = new Label("0");
+        lblTotalTrips = new Label("0");
 
-        rightWrapper.add(btnRefresh);
-        topPanel.add(lblWelcome,   BorderLayout.WEST);
-        topPanel.add(rightWrapper, BorderLayout.EAST);
-        add(topPanel, BorderLayout.NORTH);
+        HBox summaryRow = new HBox(15);
+        summaryRow.getChildren().addAll(
+            summaryCard("Total Users",        lblUsers),
+            summaryCard("Available Drivers",  lblDrivers),
+            summaryCard("Available Vehicles", lblVehicles),
+            summaryCard("Total Trips",        lblTotalTrips)
+        );
+
+        // ── Status cards ─────────────────────────────────────────────────────
+        lblPending   = statusLabel();
+        lblApproved  = statusLabel();
+        lblCompleted = statusLabel();
+        lblCancelled = statusLabel();
+
+        HBox statusRow = new HBox(15);
+        statusRow.setPadding(new Insets(10, 0, 0, 0));
+        statusRow.getChildren().addAll(
+            statusCard("Pending",   lblPending,   "status-card-pending"),
+            statusCard("Approved",  lblApproved,  "status-card-approved"),
+            statusCard("Completed", lblCompleted, "status-card-completed"),
+            statusCard("Cancelled", lblCancelled, "status-card-cancelled")
+        );
+
+        // ── Upcoming trips table ─────────────────────────────────────────────
+        Label tblTitle = new Label("Upcoming Trips");
+        tblTitle.getStyleClass().add("title-small");
+        tblTitle.setPadding(new Insets(14, 0, 6, 0));
+
+        TableView<Object[]> table = FxUtil.buildTable(
+            "Trip ID","Passenger","Driver","Vehicle","Status","Start Date");
+        FxUtil.applyStatusRenderer(table, 4);
+        tableData = FxUtil.tableData(table);
+        VBox.setVgrow(table, Priority.ALWAYS);
+        ScrollPane sp = FxUtil.tableScroll(table);
+
+        getChildren().addAll(topBar, summaryRow, statusRow, tblTitle, sp);
+        loadDashboard();
     }
 
-    private void centerPanel() {
-        JPanel centerPanel = new JPanel(new BorderLayout(0, 20));
-        centerPanel.setBackground(WHITE);
-        centerPanel.setBorder(BorderFactory.createEmptyBorder(10, 30, 20, 30));
+    // ── Card builders ─────────────────────────────────────────────────────────
+    private VBox summaryCard(String title, Label valueLabel) {
+        VBox card = new VBox(4);
+        card.getStyleClass().add("shadow-card");
+        card.setAlignment(Pos.CENTER);
+        HBox.setHgrow(card, Priority.ALWAYS);
+        card.setPrefHeight(100);
 
-        JPanel summaryPanel = new JPanel(new GridLayout(1, 4, 15, 0));
-        summaryPanel.setBackground(WHITE);
+        valueLabel.getStyleClass().add("shadow-card-label-value");
+        valueLabel.setAlignment(Pos.CENTER);
 
-        lblUsers      = new JLabel("0");
-        lblDrivers    = new JLabel("0");
-        lblVehicles   = new JLabel("0");
-        lblTotalTrips = new JLabel("0");
+        Label titleLbl = new Label(title);
+        titleLbl.getStyleClass().add("shadow-card-label-title");
+        titleLbl.setAlignment(Pos.CENTER);
 
-        summaryPanel.add(createSummaryCard("Total Users",        lblUsers,      BLUE));
-        summaryPanel.add(createSummaryCard("Available Drivers",  lblDrivers,    BLUE));
-        summaryPanel.add(createSummaryCard("Available Vehicles", lblVehicles,   BLUE));
-        summaryPanel.add(createSummaryCard("Total Trips",        lblTotalTrips, BLUE));
+        card.getChildren().addAll(valueLabel, titleLbl);
+        return card;
+    }
 
-        JPanel statusPanel = new JPanel(new GridLayout(1, 4, 15, 0));
-        statusPanel.setBackground(WHITE);
-        statusPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+    private Label statusLabel() {
+        Label l = new Label("0");
+        l.setStyle("-fx-font-weight:bold;-fx-font-size:28px;");
+        l.setAlignment(Pos.CENTER);
+        l.setMaxWidth(Double.MAX_VALUE);
+        return l;
+    }
 
-        lblPendingStatus   = new JLabel("0", SwingConstants.CENTER);
-        lblApprovedStatus  = new JLabel("0", SwingConstants.CENTER);
-        lblCompletedStatus = new JLabel("0", SwingConstants.CENTER);
-        lblCancelledStatus = new JLabel("0", SwingConstants.CENTER);
+    private VBox statusCard(String title, Label valueLabel, String styleClass) {
+        VBox card = new VBox(4);
+        card.getStyleClass().add(styleClass);
+        card.setAlignment(Pos.CENTER);
+        HBox.setHgrow(card, Priority.ALWAYS);
+        card.setPrefHeight(80);
 
-        statusPanel.add(createStatusCard("Pending",   lblPendingStatus,   ORANGE));
-        statusPanel.add(createStatusCard("Approved",  lblApprovedStatus,  BLUE));
-        statusPanel.add(createStatusCard("Completed", lblCompletedStatus, GREEN));
-        statusPanel.add(createStatusCard("Cancelled", lblCancelledStatus, RED));
-
-        JLabel lblTableTitle = new JLabel("Upcoming Trips");
-        lblTableTitle.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        lblTableTitle.setForeground(new Color(50, 50, 50));
-        lblTableTitle.setBorder(BorderFactory.createEmptyBorder(10, 0, 6, 0));
-
-        String[] columns = {"Trip ID", "Passenger", "Driver", "Vehicle", "Status", "Start Date"};
-        model = new DefaultTableModel(columns, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
+        String colour = switch (styleClass) {
+            case "status-card-pending"   -> "#E67E22";
+            case "status-card-approved"  -> "#0096C7";
+            case "status-card-completed" -> "#27AE60";
+            default                      -> "#DC3545";
         };
-        JTable table = new JTable(model);
-        
-        TableStyleUtil.applyStyle(table);
-        
-        DefaultTableCellRenderer statusRenderer = new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable t, Object val,
-                    boolean sel, boolean foc, int row, int col) {
+        Label titleLbl = new Label(title);
+        titleLbl.setStyle("-fx-font-weight:bold;-fx-font-size:14px;-fx-text-fill:" + colour + ";");
+        titleLbl.setAlignment(Pos.CENTER);
+        titleLbl.setMaxWidth(Double.MAX_VALUE);
 
-                Component c = super.getTableCellRendererComponent(t, val, sel, foc, row, col);
+        valueLabel.setStyle("-fx-font-weight:bold;-fx-font-size:28px;-fx-text-fill:" + colour + ";");
+        valueLabel.setMaxWidth(Double.MAX_VALUE);
 
-                if (!sel) {
-                    c.setBackground(row % 2 == 0 ? Color.WHITE : new Color(245, 248, 252));
-                }
-
-                if (col == 4 && val != null) { 
-                    String status = val.toString();
-
-                    c.setFont(new Font("Segoe UI", Font.BOLD, 13));
-
-                    if (status.equalsIgnoreCase("Pending")) {
-                        c.setForeground(new Color(230, 126, 34)); // ORANGE
-                    } else if (status.equalsIgnoreCase("Approved")) {
-                        c.setForeground(new Color(0, 150, 199)); // BLUE
-                    } else if (status.equalsIgnoreCase("Completed")) {
-                        c.setForeground(new Color(39, 174, 96)); // GREEN
-                    } else if (status.equalsIgnoreCase("Cancelled")) {
-                        c.setForeground(new Color(220, 53, 69)); // RED
-                    } else {
-                        c.setForeground(Color.BLACK);
-                    }
-                } else {
-                    c.setForeground(Color.BLACK);
-                    c.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-                }
-
-                return c;
-            }
-        };
-
-        //APPLY RENDERER
-        table.getColumnModel().getColumn(4).setCellRenderer(statusRenderer);
-        
-        JScrollPane scrollPane = TableStyleUtil.modernScroll(table);
-
-        JPanel tableSection = new JPanel(new BorderLayout());
-        tableSection.setBackground(WHITE);
-        tableSection.add(lblTableTitle, BorderLayout.NORTH);
-        tableSection.add(scrollPane,    BorderLayout.CENTER);
-
-        JPanel topSection = new JPanel(new BorderLayout(0, 0));
-        topSection.setBackground(WHITE);
-        topSection.add(summaryPanel, BorderLayout.NORTH);
-        topSection.add(statusPanel,  BorderLayout.SOUTH);
-
-        centerPanel.add(topSection,   BorderLayout.NORTH);
-        centerPanel.add(tableSection, BorderLayout.CENTER);
-        add(centerPanel, BorderLayout.CENTER);
+        card.getChildren().addAll(titleLbl, valueLabel);
+        return card;
     }
 
-    private JPanel createSummaryCard(String title, JLabel valueLabel, Color bgColor) {
-        ShadowPanel panel = new ShadowPanel();
-        panel.setPreferredSize(new Dimension(200, 100));
-        panel.setBackground(bgColor);
-        panel.setLayout(new BorderLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-
-        JLabel titleLabel = new JLabel(title, SwingConstants.CENTER);
-        titleLabel.setForeground(WHITE);
-        titleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-
-        valueLabel.setForeground(WHITE);
-        valueLabel.setFont(new Font("Segoe UI", Font.BOLD, 30));
-        valueLabel.setHorizontalAlignment(SwingConstants.CENTER);
-
-        panel.add(valueLabel,  BorderLayout.CENTER);
-        panel.add(titleLabel,  BorderLayout.SOUTH);
-        return panel;
-    }
-
-    private JPanel createStatusCard(String title, JLabel valueLabel, Color color) {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(WHITE);
-        panel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(color, 2, true),
-            BorderFactory.createEmptyBorder(10, 10, 10, 10)
-        ));
-
-        JLabel titleLabel = new JLabel(title, SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        titleLabel.setForeground(color);
-
-        valueLabel.setFont(new Font("Segoe UI", Font.BOLD, 28));
-        valueLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        valueLabel.setForeground(color);
-
-        panel.add(titleLabel, BorderLayout.NORTH);
-        panel.add(valueLabel, BorderLayout.CENTER);
-        return panel;
-    }
-
+    // ── Data loading ──────────────────────────────────────────────────────────
     private void loadDashboard() {
         try {
-            ResultSet rs1 = conn.prepareStatement("SELECT COUNT(*) FROM Users").executeQuery();
-            if (rs1.next()) lblUsers.setText(String.valueOf(rs1.getInt(1)));
+            ResultSet r1 = conn.prepareStatement("SELECT COUNT(*) FROM Users").executeQuery();
+            if (r1.next()) lblUsers.setText(String.valueOf(r1.getInt(1)));
 
-            ResultSet rs2 = conn.prepareStatement("SELECT COUNT(*) FROM Driver WHERE driver_status='Available'").executeQuery();
-            if (rs2.next()) lblDrivers.setText(String.valueOf(rs2.getInt(1)));
+            ResultSet r2 = conn.prepareStatement(
+                    "SELECT COUNT(*) FROM Driver WHERE driver_status='Available'").executeQuery();
+            if (r2.next()) lblDrivers.setText(String.valueOf(r2.getInt(1)));
 
-            ResultSet rs3 = conn.prepareStatement("SELECT COUNT(*) FROM Vehicle WHERE vehicle_status='Available'").executeQuery();
-            if (rs3.next()) lblVehicles.setText(String.valueOf(rs3.getInt(1)));
+            ResultSet r3 = conn.prepareStatement(
+                    "SELECT COUNT(*) FROM Vehicle WHERE vehicle_status='Available'").executeQuery();
+            if (r3.next()) lblVehicles.setText(String.valueOf(r3.getInt(1)));
 
-            ResultSet rs4 = conn.prepareStatement("SELECT COUNT(*) FROM Trip").executeQuery();
-            if (rs4.next()) lblTotalTrips.setText(String.valueOf(rs4.getInt(1)));
+            ResultSet r4 = conn.prepareStatement("SELECT COUNT(*) FROM Trip").executeQuery();
+            if (r4.next()) lblTotalTrips.setText(String.valueOf(r4.getInt(1)));
 
-            PreparedStatement psStatus = conn.prepareStatement(
-                "SELECT trip_status, COUNT(*) AS total FROM Trip GROUP BY trip_status");
-            ResultSet rsStatus = psStatus.executeQuery();
-            int pending = 0, approved = 0, completed = 0, cancelled = 0;
-            while (rsStatus.next()) {
-                String s = rsStatus.getString("trip_status");
-                int    c = rsStatus.getInt("total");
-                if      (s.equalsIgnoreCase("Pending"))   pending   = c;
-                else if (s.equalsIgnoreCase("Approved"))  approved  = c;
-                else if (s.equalsIgnoreCase("Completed")) completed = c;
-                else if (s.equalsIgnoreCase("Cancelled")) cancelled = c;
-            }
-            lblPendingStatus.setText(String.valueOf(pending));
-            lblApprovedStatus.setText(String.valueOf(approved));
-            lblCompletedStatus.setText(String.valueOf(completed));
-            lblCancelledStatus.setText(String.valueOf(cancelled));
-
-            model.setRowCount(0);
-            
             PreparedStatement ps = conn.prepareStatement(
-            		"SELECT * FROM vw_UpcomingTrips ORDER BY start_date ASC"
-            );
-            ResultSet rs5 = ps.executeQuery();
-            while (rs5.next()) {
-                model.addRow(new Object[]{
-                    rs5.getInt("trip_id"),
-                    rs5.getString("passenger"),
-                    rs5.getString("driver_name"),
-                    rs5.getString("vehicle_name"),
-                    rs5.getString("trip_status"),
-                    rs5.getDate("start_date")
+                    "SELECT trip_status, COUNT(*) AS total FROM Trip GROUP BY trip_status");
+            ResultSet rs = ps.executeQuery();
+            int pend = 0, appr = 0, comp = 0, canc = 0;
+            while (rs.next()) {
+                String s = rs.getString("trip_status");
+                int    c = rs.getInt("total");
+                if      (s.equalsIgnoreCase("Pending"))   pend = c;
+                else if (s.equalsIgnoreCase("Approved"))  appr = c;
+                else if (s.equalsIgnoreCase("Completed")) comp = c;
+                else if (s.equalsIgnoreCase("Cancelled")) canc = c;
+            }
+            lblPending.setText(String.valueOf(pend));
+            lblApproved.setText(String.valueOf(appr));
+            lblCompleted.setText(String.valueOf(comp));
+            lblCancelled.setText(String.valueOf(canc));
+
+            tableData.clear();
+            PreparedStatement ps2 = conn.prepareStatement(
+                    "SELECT * FROM vw_UpcomingTrips ORDER BY start_date ASC");
+            ResultSet r5 = ps2.executeQuery();
+            while (r5.next()) {
+                tableData.add(new Object[]{
+                    r5.getInt("trip_id"),
+                    r5.getString("passenger"),
+                    r5.getString("driver_name"),
+                    r5.getString("vehicle_name"),
+                    r5.getString("trip_status"),
+                    r5.getDate("start_date")
                 });
             }
         } catch (Exception e) { e.printStackTrace(); }

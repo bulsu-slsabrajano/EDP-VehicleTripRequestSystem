@@ -1,241 +1,127 @@
 package com.driver.panel;
 
+import com.project.dbConnection.DbConnectMsSql;
+import com.project.util.FxUtil;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.JTableHeader;
+public class VehiclePanel extends VBox {
 
-import com.project.dbConnection.DbConnectMsSql;
-import com.project.renderer.StatusRenderer;
-
-public class VehiclePanel extends JPanel {
-
-    private JTable vehicleTable;
-    private DefaultTableModel tableModel;
-
-    private JComboBox<String> vehicleDropdown;
-    private List<Integer> vehicleIds = new ArrayList<>();
-    private List<Object[]> allRows = new ArrayList<>();
+    private TableView<Object[]> vehicleTable;
+    private ObservableList<Object[]> tableData;
+    private ComboBox<String> vehicleDropdown;
+    private final List<Integer> vehicleIds = new ArrayList<>();
+    private final List<Object[]> allRows   = new ArrayList<>();
 
     public VehiclePanel() {
-
-        setLayout(new BorderLayout());
-        setBackground(Color.WHITE);
-
-        JPanel mainPanel = new JPanel();
-        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-        mainPanel.setBackground(Color.WHITE);
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
-
-
-        JLabel title = new JLabel("Vehicle");
-        title.setFont(new Font("Arial", Font.BOLD, 26));
-        title.setForeground(new Color(26,43,109));
-        //title.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
-        JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        titlePanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        titlePanel.setBackground(Color.WHITE);
-        
-        titlePanel.add(title);
-
-        mainPanel.add(titlePanel);
-        mainPanel.add(Box.createRigidArea(new Dimension(0, 15)));
-
-        //DROPDOWN
-        mainPanel.add(buildDropdown());
-        mainPanel.add(Box.createRigidArea(new Dimension(0, 15)));
-
-        //tABLE
-        mainPanel.add(buildTable());
-
-        add(mainPanel, BorderLayout.CENTER);
-    }
-    
-    public void loadData() {
-        loadVehicles();
+        setBackground(Background.fill(Color.WHITE));
+        setPadding(new Insets(20));
+        setSpacing(15);
+        buildUI();
     }
 
-    private JPanel buildDropdown() {
+    public void loadData() { loadVehicles(); }
 
-    	JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        panel.setBackground(Color.WHITE);
+    private void buildUI() {
+        Label title = new Label("Vehicle");
+        title.setStyle("-fx-font-weight:bold;-fx-font-size:26px;-fx-text-fill:#1A2B6D;");
 
-        vehicleDropdown = new JComboBox<>();
-        vehicleDropdown.addItem("All Types");
+        // ── Dropdown filter ───────────────────────────────────────────────────
+        vehicleDropdown = new ComboBox<>(FXCollections.observableArrayList("All Types"));
+        vehicleDropdown.getStyleClass().add("combo-field");
+        vehicleDropdown.setPrefWidth(200);
+        vehicleDropdown.setValue("All Types");
 
-        vehicleDropdown.addActionListener(e -> {
-            int index = vehicleDropdown.getSelectedIndex();
-
-            if (index == 0) {
-
+        vehicleDropdown.setOnAction(e -> {
+            int idx = vehicleDropdown.getSelectionModel().getSelectedIndex();
+            if (idx == 0) {
                 DriverData.selectedVehicleId = null;
-                tableModel.setRowCount(0);
-                for (Object[] row : allRows) {
-                    tableModel.addRow(row);
-                }
+                tableData.setAll(allRows);
             } else {
-                String selectedType = (String) vehicleDropdown.getSelectedItem();
+                String selectedType = vehicleDropdown.getValue();
                 DriverData.selectedVehicleId = null;
-
-                tableModel.setRowCount(0);
+                tableData.clear();
                 for (Object[] row : allRows) {
                     if (row[3].toString().equalsIgnoreCase(selectedType)) {
-                        tableModel.addRow(row);
-                        if (DriverData.selectedVehicleId == null) {
+                        tableData.add(row);
+                        if (DriverData.selectedVehicleId == null)
                             DriverData.selectedVehicleId = (int) row[0];
-                        }
                     }
                 }
             }
-
             TripPanel.refreshTrips();
         });
 
-        panel.add(new JLabel("Filter by Vehicle Type: "));
-        panel.add(vehicleDropdown);
-        return panel;
-    }
-    	
-    private JScrollPane buildTable() {
+        HBox filterBar = new HBox(10,
+            new Label("Filter by Vehicle Type:"), vehicleDropdown);
+        filterBar.setAlignment(Pos.CENTER_LEFT);
 
-    	tableModel = new DefaultTableModel(
-    	        new String[]{
-    	                "Vehicle ID",
-    	                "Model",
-    	                "Plate",
-    	                "Type",
-    	                "Capacity",
-    	                "Status"
-    	        }, 0
-    	) {
-    	    @Override
-    	    public boolean isCellEditable(int row, int column) {
-    	        return false;
-    	    }
-    	};
+        // ── Table ─────────────────────────────────────────────────────────────
+        vehicleTable = FxUtil.buildTable(
+            "Vehicle ID", "Model", "Plate", "Type", "Capacity", "Status");
+        FxUtil.applyStatusRenderer(vehicleTable, 5);
+        tableData = FxUtil.tableData(vehicleTable);
+        VBox.setVgrow(vehicleTable, Priority.ALWAYS);
 
-        vehicleTable = new JTable(tableModel);
-        styleTable(vehicleTable);
-        
-        vehicleTable.getColumnModel()
-        .getColumn(5) //column ng status
-        .setCellRenderer(new StatusRenderer());
-
-
-        vehicleTable.getSelectionModel().addListSelectionListener(e -> {
-            int row = vehicleTable.getSelectedRow();
-
-            if (row != -1) {
-                int vehicleId = (int) tableModel.getValueAt(row, 0);
-                DriverData.selectedVehicleId = vehicleId;
-
+        vehicleTable.getSelectionModel().selectedItemProperty().addListener(
+            (obs, old, row) -> {
+                if (row == null) return;
+                DriverData.selectedVehicleId = (int) row[0];
                 TripPanel.refreshTrips();
-            }
-        });
+            });
 
-        return new JScrollPane(vehicleTable);
+        getChildren().addAll(title, filterBar, FxUtil.tableScroll(vehicleTable));
+        VBox.setVgrow(this, Priority.ALWAYS);
     }
 
     private void loadVehicles() {
-
         allRows.clear();
         vehicleIds.clear();
-        tableModel.setRowCount(0);
-        vehicleDropdown.removeAllItems();
-        vehicleDropdown.addItem("All Types");
+        tableData.clear();
+        vehicleDropdown.getItems().setAll("All Types");
+        vehicleDropdown.setValue("All Types");
 
         try {
             DbConnectMsSql db = new DbConnectMsSql();
-
-            String sql = """
-                SELECT v.vehicle_id,
-                       v.vehicle_model,
-                       v.plate_number,
-                       v.vehicle_type,
-                       v.passenger_capacity,
-                       v.vehicle_status
-                FROM Vehicle_Assignment va
-                JOIN Vehicle v ON va.vehicle_id = v.vehicle_id
-                WHERE va.driver_id = ?
-            """;
-
-            PreparedStatement pstmt = db.conn.prepareStatement(sql);
-            pstmt.setInt(1, DriverData.driverId);
-
-            ResultSet rs = pstmt.executeQuery();
-
+            PreparedStatement ps = db.conn.prepareStatement(
+                "SELECT v.vehicle_id, v.vehicle_model, v.plate_number," +
+                "       v.vehicle_type, v.passenger_capacity, v.vehicle_status " +
+                "FROM Vehicle_Assignment va " +
+                "JOIN Vehicle v ON va.vehicle_id=v.vehicle_id " +
+                "WHERE va.driver_id=?");
+            ps.setInt(1, DriverData.driverId);
+            ResultSet rs = ps.executeQuery();
             List<String> addedTypes = new ArrayList<>();
 
             while (rs.next()) {
-
-                int vehicleId = rs.getInt("vehicle_id");
-                vehicleIds.add(vehicleId);
-
+                int vid  = rs.getInt("vehicle_id");
+                vehicleIds.add(vid);
                 String type = rs.getString("vehicle_type");
                 if (!addedTypes.contains(type)) {
-                    vehicleDropdown.addItem(type);
+                    vehicleDropdown.getItems().add(type);
                     addedTypes.add(type);
                 }
-
                 Object[] row = {
-                    vehicleId,
+                    vid,
                     rs.getString("vehicle_model"),
                     rs.getString("plate_number"),
                     type,
                     rs.getInt("passenger_capacity"),
                     rs.getString("vehicle_status")
                 };
-
                 allRows.add(row);
-                tableModel.addRow(row);
+                tableData.add(row);
             }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) { e.printStackTrace(); }
     }
-    
-    private void styleTable(JTable table){
-
-        table.setFont(new Font("Arial",Font.PLAIN,13));
-        table.setRowHeight(32);
-
-        table.setGridColor(new Color(220,225,235));
-        table.setShowVerticalLines(true);
-        table.setShowHorizontalLines(true);
-
-        table.setBackground(Color.WHITE);
-
-        table.setSelectionBackground(new Color(210,220,245));
-        table.setSelectionForeground(new Color(26,43,109));
-
-        table.setFillsViewportHeight(true);
-
-        JTableHeader header = table.getTableHeader();
-
-        header.setFont(new Font("Arial",Font.BOLD,13));
-        header.setBackground(new Color(240,244,255));
-        header.setForeground(new Color(26,43,109));
-        header.setReorderingAllowed(false);
-    }
-
 }

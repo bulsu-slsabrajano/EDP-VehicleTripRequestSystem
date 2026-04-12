@@ -1,310 +1,126 @@
 package com.driver.panel;
 
+import com.project.dbConnection.DbConnectMsSql;
+import com.project.util.FxUtil;
+import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.GridLayout;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.List;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.JTableHeader;
+public class AssignmentPanel extends VBox {
 
-import com.project.dbConnection.DbConnectMsSql;
+    private TableView<Object[]> assignmentTable;
+    private ObservableList<Object[]> tableData;
 
-public class AssignmentPanel extends JPanel {
-	
-    private JTable assignmentTable;
-    private DefaultTableModel tableModel;
-
-    private JLabel vehicleIdValue;
-    private JLabel plateNumberValue;
-    private JLabel typeValue;
-    private JLabel dateAssignedValue;
-    private JLabel statusValue;
+    // Detail labels
+    private Label vehicleIdValue    = detailLbl();
+    private Label plateNumberValue  = detailLbl();
+    private Label typeValue         = detailLbl();
+    private Label dateAssignedValue = detailLbl();
+    private Label statusValue       = detailLbl();
 
     public AssignmentPanel() {
-
-        setLayout(new BorderLayout());
-        setBackground(Color.WHITE);
-
-   
-        JPanel mainContent = new JPanel();
-        mainContent.setLayout(new BoxLayout(mainContent, BoxLayout.Y_AXIS));
-        mainContent.setBackground(Color.WHITE);
-        mainContent.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
-
-      
-        JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT,0,0));
-        titlePanel.setBackground(Color.WHITE);
-        titlePanel.setMaximumSize(new Dimension(Integer.MAX_VALUE,50));
-
-        JLabel title = new JLabel("Assignments");
-        title.setFont(new Font("Arial",Font.BOLD,26));
-        title.setForeground(new Color(26,43,109));
-
-        titlePanel.add(title);
-
-        mainContent.add(titlePanel);
-        mainContent.add(Box.createVerticalStrut(20));
-
-        mainContent.add(buildVehicleAssignmentsSection());
-        mainContent.add(Box.createVerticalStrut(20));
-
-        mainContent.add(buildAssignmentDetailsPanel());
-
-        JScrollPane scrollPane = new JScrollPane(mainContent);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder());
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-
-        add(scrollPane, BorderLayout.CENTER);
-        
-    }
-    
-    public void loadData() {
-        loadFromDb();
+        setBackground(Background.fill(Color.WHITE));
+        setPadding(new Insets(20));
+        setSpacing(15);
+        buildUI();
     }
 
-    private JPanel buildVehicleAssignmentsSection() {
+    public void loadData() { loadFromDb(); }
 
-        JPanel section = new JPanel(new BorderLayout());
-        section.setBackground(Color.WHITE);
+    private void buildUI() {
+        Label title = new Label("Assignments");
+        title.setStyle("-fx-font-weight:bold;-fx-font-size:26px;-fx-text-fill:#1A2B6D;");
 
-        section.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(200,210,230),1),
-                BorderFactory.createEmptyBorder(16,16,16,16)
-        ));
+        // ── Assignments table section ─────────────────────────────────────────
+        VBox tableSection = new VBox(10);
+        tableSection.setStyle(
+            "-fx-border-color:#C8D2E6;-fx-border-width:1px;-fx-border-radius:6px;" +
+            "-fx-background-color:white;-fx-background-radius:6px;-fx-padding:16px;");
 
-        section.setMaximumSize(new Dimension(Integer.MAX_VALUE,300));
+        Label sectionTitle = new Label("Vehicle Assignments");
+        sectionTitle.getStyleClass().add("title-small");
 
-        JLabel sectionTitle = new JLabel("Vehicle Assignments");
-        sectionTitle.setFont(new Font("Arial",Font.BOLD,16));
-        sectionTitle.setForeground(new Color(26,43,109));
-        sectionTitle.setBorder(BorderFactory.createEmptyBorder(0,0,10,0));
+        assignmentTable = FxUtil.buildTable(
+            "Vehicle ID", "Plate No.", "Type", "Date Assigned", "Assignment Status");
+        FxUtil.applyStatusRenderer(assignmentTable, 4);
+        tableData = FxUtil.tableData(assignmentTable);
+        assignmentTable.setPrefHeight(220);
 
-        section.add(sectionTitle,BorderLayout.NORTH);
+        assignmentTable.getSelectionModel().selectedItemProperty().addListener(
+            (obs, old, row) -> {
+                if (row == null) return;
+                vehicleIdValue.setText(row[0].toString());
+                plateNumberValue.setText(row[1].toString());
+                typeValue.setText(row[2].toString());
+                dateAssignedValue.setText(row[3].toString());
+                String s = row[4].toString();
+                statusValue.setText(s);
+                statusValue.setStyle("Active".equalsIgnoreCase(s)
+                    ? "-fx-text-fill:#228B22;-fx-font-weight:bold;"
+                    : "-fx-text-fill:#B40000;-fx-font-weight:bold;");
+            });
 
-        String[] columns = {
-                "Vehicle ID",
-                "Plate No.",
-                "Type",
-                "Date Assigned",
-                "Assignment Status"
-        };
+        tableSection.getChildren().addAll(sectionTitle, FxUtil.tableScroll(assignmentTable));
+        VBox.setVgrow(tableSection, Priority.ALWAYS);
 
-        tableModel = new DefaultTableModel(columns,0){
-            @Override
-            public boolean isCellEditable(int r,int c){
-                return false;
-            }
-        };
+        // ── Detail card ───────────────────────────────────────────────────────
+        VBox detailCard = new VBox(10);
+        detailCard.setStyle(
+            "-fx-border-color:#C8D2E6;-fx-border-width:1px;-fx-border-radius:6px;" +
+            "-fx-background-color:white;-fx-background-radius:6px;-fx-padding:16px;");
 
-        assignmentTable = new JTable(tableModel);
+        Label detailTitle = new Label("Assignment Details");
+        detailTitle.getStyleClass().add("title-small");
 
-        //style the table
-        styleTable(assignmentTable);
+        GridPane grid = FxUtil.formGrid();
+        int y = 0;
+        FxUtil.addInfoRow(grid, "Vehicle ID:",     vehicleIdValue,    y++);
+        FxUtil.addInfoRow(grid, "Plate Number:",   plateNumberValue,  y++);
+        FxUtil.addInfoRow(grid, "Vehicle Type:",   typeValue,         y++);
+        FxUtil.addInfoRow(grid, "Date Assigned:",  dateAssignedValue, y++);
+        FxUtil.addInfoRow(grid, "Status:",         statusValue,       y);
 
-        assignmentTable.addMouseListener(new MouseAdapter(){
+        detailCard.getChildren().addAll(detailTitle, grid);
 
-            @Override
-            public void mouseClicked(MouseEvent e){
-
-                int row = assignmentTable.getSelectedRow();
-
-                if(row >= 0){
-
-                    vehicleIdValue.setText(tableModel.getValueAt(row,0).toString());
-                    plateNumberValue.setText(tableModel.getValueAt(row,1).toString());
-                    typeValue.setText(tableModel.getValueAt(row,2).toString());
-                    dateAssignedValue.setText(tableModel.getValueAt(row,3).toString());
-
-                    String status = tableModel.getValueAt(row,4).toString();
-
-                    //update status label
-                    statusValue.setText(status);
-
-                    if(status.equalsIgnoreCase("Active")){
-                        statusValue.setForeground(new Color(34,139,34));
-                    }
-                    else if(status.equalsIgnoreCase("Inactive")){
-                        statusValue.setForeground(new Color(180,0,0));
-                    }
-                    else{
-                        statusValue.setForeground(new Color(34,139,34));
-                    }
-                }
-            }
-        });
-
-        JScrollPane tableScroll = new JScrollPane(assignmentTable);
-        tableScroll.setBorder(BorderFactory.createEmptyBorder());
-
-        section.add(tableScroll,BorderLayout.CENTER);
-
-        return section;
+        getChildren().addAll(title, tableSection, detailCard);
     }
 
-    private JPanel buildAssignmentDetailsPanel(){
-
-        JPanel card = new JPanel(new BorderLayout());
-        card.setBackground(Color.WHITE);
-
-        //card border style
-        card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(200,210,230),1),
-                BorderFactory.createEmptyBorder(16,16,16,16)
-        ));
-
-        //title
-        JLabel title = new JLabel("Assignment Details");
-        title.setFont(new Font("Arial",Font.BOLD,16));
-        title.setForeground(new Color(26,43,109));
-        title.setBorder(BorderFactory.createEmptyBorder(0,0,10,0));
-
-        card.add(title,BorderLayout.NORTH);
-
-        JPanel fields = new JPanel(new GridLayout(5,2,12,10));
-        fields.setBackground(Color.WHITE);
-
-        vehicleIdValue = new JLabel("-");
-        plateNumberValue = new JLabel("-");
-        typeValue = new JLabel("-");
-        dateAssignedValue = new JLabel("-");
-        statusValue = new JLabel("-");
-
-        fields.add(createLabel("Vehicle ID:"));
-        fields.add(vehicleIdValue);
-
-        fields.add(createLabel("Plate Number:"));
-        fields.add(plateNumberValue);
-
-        fields.add(createLabel("Vehicle Type:"));
-        fields.add(typeValue);
-
-        fields.add(createLabel("Date Assigned:"));
-        fields.add(dateAssignedValue);
-
-        fields.add(createLabel("Status:"));
-        fields.add(statusValue);
-
-        card.add(fields,BorderLayout.CENTER);
-
-        return card;
-    }
-    
-    
     private void loadFromDb() {
-
-        tableModel.setRowCount(0);
-
         try {
             DbConnectMsSql db = new DbConnectMsSql();
-
-            String sql = """
-                SELECT 
-                       v.vehicle_id,
-                       v.plate_number,
-                       v.vehicle_type,
-                       va.date_assigned,
-                       va.assignment_status
-                FROM Vehicle_Assignment va
-                JOIN Vehicle v ON va.vehicle_id = v.vehicle_id
-                WHERE va.driver_id = ?
-                ORDER BY va.date_assigned DESC
-            """;
-
-            PreparedStatement pstmt = db.conn.prepareStatement(sql);
-            pstmt.setInt(1, DriverData.driverId);
-
-            ResultSet rs = pstmt.executeQuery();
-
+            PreparedStatement ps = db.conn.prepareStatement(
+                "SELECT v.vehicle_id, v.plate_number, v.vehicle_type," +
+                "       va.date_assigned, va.assignment_status " +
+                "FROM Vehicle_Assignment va " +
+                "JOIN Vehicle v ON va.vehicle_id=v.vehicle_id " +
+                "WHERE va.driver_id=? ORDER BY va.date_assigned DESC");
+            ps.setInt(1, DriverData.driverId);
+            ResultSet rs = ps.executeQuery();
+            tableData.clear();
             while (rs.next()) {
-                tableModel.addRow(new Object[]{
-                    rs.getInt("vehicle_id"),        
-                    rs.getString("plate_number"),   
-                    rs.getString("vehicle_type"),   
-                    rs.getDate("date_assigned"),   
-                    rs.getString("assignment_status") 
+                tableData.add(new Object[]{
+                    rs.getInt("vehicle_id"),
+                    rs.getString("plate_number"),
+                    rs.getString("vehicle_type"),
+                    rs.getDate("date_assigned"),
+                    rs.getString("assignment_status")
                 });
             }
-
-            if (tableModel.getRowCount() > 0) {
-                assignmentTable.setRowSelectionInterval(0, 0);
-
-                vehicleIdValue.setText(tableModel.getValueAt(0, 0).toString());
-                plateNumberValue.setText(tableModel.getValueAt(0, 1).toString());
-                typeValue.setText(tableModel.getValueAt(0, 2).toString());
-                dateAssignedValue.setText(tableModel.getValueAt(0, 3).toString());
-
-                String status = tableModel.getValueAt(0, 4).toString();
-                statusValue.setText(status);
-
-                if (status.equalsIgnoreCase("Active")) {
-                    statusValue.setForeground(new Color(34, 139, 34));
-                } else if (status.equalsIgnoreCase("Inactive")) {
-                    statusValue.setForeground(new Color(180, 0, 0));
-                } else {
-                    statusValue.setForeground(new Color(200, 140, 0));
-                }
+            if (!tableData.isEmpty()) {
+                assignmentTable.getSelectionModel().selectFirst();
             }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) { e.printStackTrace(); }
     }
 
-    private JLabel createLabel(String text){
-
-        JLabel label = new JLabel(text);
-        label.setFont(new Font("Arial",Font.BOLD,13));
-        label.setForeground(new Color(60,60,60));
-
-        return label;
-    }
-
-    private void styleTable(JTable table){
-
-        table.setFont(new Font("Arial",Font.PLAIN,13));
-        table.setRowHeight(32);
-
-        table.setGridColor(new Color(220,225,235));
-        table.setShowVerticalLines(true);
-        table.setShowHorizontalLines(true);
-
-        table.setBackground(Color.WHITE);
-
-        table.setSelectionBackground(new Color(210,220,245));
-        table.setSelectionForeground(new Color(26,43,109));
-
-        table.setFillsViewportHeight(true);
-
-        JTableHeader header = table.getTableHeader();
-
-        header.setFont(new Font("Arial",Font.BOLD,13));
-        header.setBackground(new Color(240,244,255));
-        header.setForeground(new Color(26,43,109));
-        header.setReorderingAllowed(false);
-    }
-
-    public void loadAssignments(List<String[]> assignments){
-
-        tableModel.setRowCount(0);
-
-        for(String[] row : assignments){
-            tableModel.addRow(row);
-        }
+    private static Label detailLbl() {
+        Label l = new Label("-");
+        l.getStyleClass().add("form-label");
+        return l;
     }
 }

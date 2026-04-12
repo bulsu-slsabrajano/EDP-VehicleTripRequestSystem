@@ -1,1083 +1,476 @@
 package com.admin.panel;
 
-import java.awt.BorderLayout;
-import java.awt.CardLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.time.LocalDate;
-
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.SwingConstants;
-import javax.swing.border.EmptyBorder;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-
 import com.project.dbConnection.DbConnectMsSql;
+import com.project.util.CardPane;
+import com.project.util.FxUtil;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 
-public class TripPanel extends JPanel {
+import java.sql.*;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
-    private CardLayout cardLayout;
-    private JPanel container;
-    private JTable table;
-    private DefaultTableModel model;
-    private JComboBox<String> cmbFilter;
+public class TripPanel extends BorderPane {
+
+	private final CardPane cards = new CardPane(); 
+	private ObservableList<Object[]> tableData = FXCollections.observableArrayList(); 
+	private TableView<Object[]> table; 
+	private ComboBox<String> cmbFilter; 
     private Connection conn;
-
-    private int    loggedInAdminId   = -1;
+    private int loggedInAdminId = -1;
     private String loggedInAdminName = "";
+    private final List<Integer> tripIds = new ArrayList<>();
 
-    CreateTripPanel  createPanel;
-    private UpdateTripPanel  updatePanel;
-    private ViewTripPanel    viewPanel;
-
-    private static final Color BLUE   = new Color(0, 150, 199);
-    private static final Color RED    = new Color(220, 53, 69);
-    private static final Color ORANGE = new Color(230, 126, 34);
-    private static final Color GREEN  = new Color(39, 174, 96);
-    private static final Color WHITE  = Color.WHITE;
-    private static final Color STRIPE = new Color(245, 248, 252);
-    private static final Font  LABEL_FONT = new Font("Segoe UI", Font.PLAIN, 13);
-    private static final Font  TITLE_FONT = new Font("Segoe UI", Font.BOLD, 20);
-
-    private java.util.List<Integer> tripIds = new java.util.ArrayList<>();
+    public CreateTripPanel createPanel;
+    private UpdateTripPanel updatePanel;
+    private ViewTripPanel   viewPanel;
 
     public TripPanel(int adminId) {
         DbConnectMsSql db = new DbConnectMsSql();
         conn = db.conn;
-
-        this.loggedInAdminId   = adminId;
-        this.loggedInAdminName = fetchAdminName(adminId);
-
-        cardLayout  = new CardLayout();
-        container   = new JPanel(cardLayout);
-        container.setBackground(WHITE);
+        loggedInAdminId   = adminId;
+        loggedInAdminName = fetchAdminName(adminId);
+        setBackground(Background.fill(Color.WHITE));
 
         createPanel = new CreateTripPanel();
         updatePanel = new UpdateTripPanel();
         viewPanel   = new ViewTripPanel();
 
-        container.add(listPanel(),  "LIST");
-        container.add(createPanel, "CREATE");
-        container.add(updatePanel, "UPDATE");
-        container.add(viewPanel,   "VIEW");
-
-        setLayout(new BorderLayout());
-        setBackground(WHITE);
-        add(container, BorderLayout.CENTER);
+        cards.addCard("LIST",   buildListPanel());
+        cards.addCard("CREATE", createPanel);
+        cards.addCard("UPDATE", updatePanel);
+        cards.addCard("VIEW",   viewPanel);
+        cards.show("LIST");
+        setCenter(cards);
         loadTrips("All");
     }
 
-    public TripPanel() {
-        this(-1);
-    }
+    public TripPanel() { this(-1); }
 
-    private String fetchAdminName(int adminId) {
-        if (adminId <= 0) return "—";
+    private String fetchAdminName(int id) {
+        if (id <= 0) return "—";
         try {
-            PreparedStatement ps = conn.prepareStatement(
-                "SELECT first_name+' '+last_name AS full_name FROM Users WHERE user_id=?");
-            ps.setInt(1, adminId);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) return rs.getString("full_name");
+            PreparedStatement ps = conn.prepareStatement("SELECT first_name+' '+last_name AS n FROM Users WHERE user_id=?");
+            ps.setInt(1, id); ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getString("n");
         } catch (Exception e) { e.printStackTrace(); }
         return "—";
     }
 
-    private JScrollPane modernScroll(JTable t) {
-        JScrollPane sp = new JScrollPane(t);
-        sp.setBorder(BorderFactory.createLineBorder(new Color(210, 220, 235), 1));
-        sp.getViewport().setBackground(WHITE);
-        sp.getVerticalScrollBar().setUI(new javax.swing.plaf.basic.BasicScrollBarUI() {
-            @Override protected void configureScrollBarColors() {
-                thumbColor = new Color(0, 150, 199, 120);
-                trackColor = new Color(240, 244, 250);
-            }
-            @Override protected JButton createDecreaseButton(int o) { return zeroButton(); }
-            @Override protected JButton createIncreaseButton(int o) { return zeroButton(); }
-            private JButton zeroButton() {
-                JButton b = new JButton();
-                b.setPreferredSize(new Dimension(0, 0));
-                b.setBorderPainted(false);
-                return b;
-            }
+    private BorderPane buildListPanel() {
+        BorderPane main = new BorderPane();
+        main.setBackground(Background.fill(Color.WHITE));
+        main.setPadding(new Insets(20, 30, 20, 30));
+
+        cmbFilter = FxUtil.styledCombo(FXCollections.observableArrayList("All","Pending","Approved","Completed","Cancelled"));
+        cmbFilter.setValue("All");
+        cmbFilter.setOnAction(e -> loadTrips(cmbFilter.getValue()));
+        Button btnRefresh = FxUtil.btnPrimary("Refresh");
+        btnRefresh.setOnAction(e -> { cmbFilter.setValue("All"); loadTrips("All"); });
+
+        HBox topBar = new HBox(8, new Label("Filter by Status:"), cmbFilter, FxUtil.hgrow(), btnRefresh);
+        topBar.setAlignment(Pos.CENTER_LEFT);
+        topBar.setPadding(new Insets(0, 0, 10, 0));
+
+        table = (TableView<Object[]>) FxUtil.buildTable(
+            "Trip ID","Passenger","Admin","Assignment",
+            "Start Date","Start Time","End Date","End Time",
+            "Pickup","Destination","Pax","Status");
+        FxUtil.applyStatusRenderer(table, 11);
+        tableData = (ObservableList<Object[]>) FxUtil.tableData(table);
+
+        Button btnView    = FxUtil.btnPrimary("View");
+        Button btnCreate  = FxUtil.btnPrimary("Create Trip");
+        Button btnUpdate  = FxUtil.btnPrimary("Update");
+        Button btnApprove = FxUtil.btnSuccess("Approve");
+        Button btnReject  = FxUtil.btnDanger("Reject");
+
+        btnView.setOnAction(e -> {
+            int idx = table.getSelectionModel().getSelectedIndex();
+            if (idx < 0) { FxUtil.showInfo(this,"Select a trip first!"); return; }
+            viewPanel.load(tripIds.get(idx)); cards.show("VIEW");
         });
-        sp.getHorizontalScrollBar().setUI(new javax.swing.plaf.basic.BasicScrollBarUI() {
-            @Override protected void configureScrollBarColors() {
-                thumbColor = new Color(0, 150, 199, 120);
-                trackColor = new Color(240, 244, 250);
-            }
-            @Override protected JButton createDecreaseButton(int o) { return zeroButton(); }
-            @Override protected JButton createIncreaseButton(int o) { return zeroButton(); }
-            private JButton zeroButton() {
-                JButton b = new JButton();
-                b.setPreferredSize(new Dimension(0, 0));
-                b.setBorderPainted(false);
-                return b;
-            }
+        btnCreate.setOnAction(e -> { createPanel.resetFields(); cards.show("CREATE"); });
+        btnUpdate.setOnAction(e -> {
+            int idx = table.getSelectionModel().getSelectedIndex();
+            if (idx < 0) { FxUtil.showInfo(this,"Select a trip first!"); return; }
+            updatePanel.load(tripIds.get(idx)); cards.show("UPDATE");
         });
-        return sp;
-    }
-
-    private void applyTableStyle(JTable t) {
-        t.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
-            @Override public Component getTableCellRendererComponent(
-                    JTable tbl, Object val, boolean sel, boolean foc, int row, int col) {
-                super.getTableCellRendererComponent(tbl, val, sel, foc, row, col);
-                setOpaque(true);
-                setBackground(sel ? new Color(200, 230, 255) : (row % 2 == 0 ? WHITE : STRIPE));
-                setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 6));
-                return this;
-            }
+        btnApprove.setOnAction(e -> {
+            int idx = table.getSelectionModel().getSelectedIndex();
+            if (idx < 0) { FxUtil.showInfo(this,"Select a trip first!"); return; }
+            Object[] row = tableData.get(idx);
+            if (!"Pending".equalsIgnoreCase((String)row[11])) { FxUtil.showInfo(this,"Only Pending trips can be approved."); return; }
+            Object av = row[3];
+            if (av == null || av.toString().equals("—") || av.toString().isEmpty()) {
+                FxUtil.showWarning(this,"This trip has no assignment yet.\nPlease update it first."); return; }
+            updateStatus(tripIds.get(idx), "Approved");
         });
-    }
-
-    private JPanel listPanel() {
-        JPanel main = new JPanel(new BorderLayout());
-        main.setBackground(WHITE);
-        main.setBorder(new EmptyBorder(20, 30, 20, 30));
-
-        JPanel top = new JPanel(new BorderLayout());
-        top.setBackground(WHITE);
-        top.setBorder(new EmptyBorder(0, 0, 10, 0));
-
-        JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        filterPanel.setBackground(WHITE);
-        JLabel lblFilter = new JLabel("Filter by Status:");
-        lblFilter.setFont(LABEL_FONT);
-        cmbFilter = new JComboBox<>(new String[]{"All", "Pending", "Approved", "Completed", "Cancelled"});
-        cmbFilter.setPreferredSize(new Dimension(140, 30));
-        cmbFilter.addActionListener(e -> loadTrips(cmbFilter.getSelectedItem().toString()));
-        filterPanel.add(lblFilter);
-        filterPanel.add(cmbFilter);
-
-        JPanel refreshPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
-        refreshPanel.setBackground(WHITE);
-        JButton btnRefresh = new JButton("Refresh");
-        styleButtonFilled(btnRefresh, BLUE);
-        btnRefresh.addActionListener(e -> { cmbFilter.setSelectedItem("All"); loadTrips("All"); });
-        refreshPanel.add(btnRefresh);
-        top.add(filterPanel,  BorderLayout.WEST);
-        top.add(refreshPanel, BorderLayout.EAST);
-
-        String[] cols = {"Trip ID", "Passenger", "Admin", "Assignment",
-                "Start Date", "Start Time", "End Date", "End Time",
-                "Pickup", "Destination", "Pax", "Status"};
-        model = new DefaultTableModel(cols, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
-        };
-        table = new JTable(model);
-        table.getTableHeader().setPreferredSize(new Dimension(0, 36));
-        table.setRowHeight(36);
-        table.setBackground(WHITE);
-        table.setFont(LABEL_FONT);
-        table.setGridColor(new Color(230, 235, 245));
-        table.setShowHorizontalLines(true);
-        table.setShowVerticalLines(false);
-        table.setSelectionBackground(new Color(200, 230, 255));
-        table.getTableHeader().setBackground(BLUE);
-        table.getTableHeader().setForeground(WHITE);
-        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
-        table.getTableHeader().setBorder(BorderFactory.createEmptyBorder());
-        applyTableStyle(table);
-
-        table.getColumnModel().getColumn(11).setCellRenderer(new DefaultTableCellRenderer() {
-            @Override public Component getTableCellRendererComponent(JTable t, Object val,
-                    boolean sel, boolean foc, int row, int col) {
-                super.getTableCellRendererComponent(t, val, sel, foc, row, col);
-                setHorizontalAlignment(LEFT);
-                String s = val != null ? val.toString() : "";
-                setBackground(sel ? new Color(200, 230, 255) : (row % 2 == 0 ? WHITE : STRIPE));
-                setForeground(switch (s.toLowerCase()) {
-                    case "pending"   -> ORANGE;
-                    case "approved"  -> BLUE;
-                    case "completed" -> GREEN;
-                    case "cancelled" -> RED;
-                    default          -> Color.DARK_GRAY;
-                });
-                setFont(new Font("Segoe UI", Font.BOLD, 13));
-                setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 6));
-                return this;
-            }
+        btnReject.setOnAction(e -> {
+            int idx = table.getSelectionModel().getSelectedIndex();
+            if (idx < 0) { FxUtil.showInfo(this,"Select a trip first!"); return; }
+            if (!"Pending".equalsIgnoreCase((String)tableData.get(idx)[11])) { FxUtil.showInfo(this,"Only Pending trips can be rejected."); return; }
+            if (FxUtil.confirm(this,"Reject this trip? It will be marked as Cancelled.","Confirm Reject"))
+                updateStatus(tripIds.get(idx), "Cancelled");
         });
 
-        JScrollPane scroll = modernScroll(table);
+        HBox bottom = new HBox(8, btnView, btnCreate, btnUpdate, btnApprove, btnReject);
+        bottom.setAlignment(Pos.CENTER_RIGHT);
+        bottom.setPadding(new Insets(8, 0, 0, 0));
 
-        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 5));
-        bottom.setBackground(WHITE);
-
-        JButton btnView    = new JButton("View");
-        JButton btnCreate  = new JButton("Create Trip");
-        JButton btnUpdate  = new JButton("Update");
-        JButton btnApprove = new JButton("Approve");
-        JButton btnReject  = new JButton("Reject");
-
-        styleButtonFilled(btnView,    BLUE);
-        styleButtonFilled(btnCreate,  BLUE);
-        styleButtonFilled(btnUpdate,  BLUE);
-        styleButtonFilled(btnApprove, GREEN);
-        styleButtonFilled(btnReject,  RED);
-
-        btnView.addActionListener(e -> {
-            int row = table.getSelectedRow();
-            if (row == -1) { JOptionPane.showMessageDialog(this, "Select a trip first!"); return; }
-            viewPanel.loadTrip(tripIds.get(row));
-            cardLayout.show(container, "VIEW");
-        });
-
-        btnCreate.addActionListener(e -> {
-            createPanel.resetFields();
-            cardLayout.show(container, "CREATE");
-        });
-
-        btnApprove.addActionListener(e -> {
-            int row = table.getSelectedRow();
-            if (row == -1) { JOptionPane.showMessageDialog(this, "Select a trip first!"); return; }
-            if (!"Pending".equalsIgnoreCase((String) model.getValueAt(row, 11))) {
-                JOptionPane.showMessageDialog(this, "Only Pending trips can be approved.");
-                return;
-            }
-            Object assignVal = model.getValueAt(row, 3);
-            if (assignVal == null || assignVal.toString().equals("—") || assignVal.toString().isEmpty()) {
-                JOptionPane.showMessageDialog(this,
-                    "This trip has no assignment yet.\nPlease update it with an assignment first.",
-                    "No Assignment", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            updateTripStatus(tripIds.get(row), "Approved");
-        });
-
-        btnReject.addActionListener(e -> {
-            int row = table.getSelectedRow();
-            if (row == -1) { JOptionPane.showMessageDialog(this, "Select a trip first!"); return; }
-            if (!"Pending".equalsIgnoreCase((String) model.getValueAt(row, 11))) {
-                JOptionPane.showMessageDialog(this, "Only Pending trips can be rejected.");
-                return;
-            }
-            int confirm = JOptionPane.showConfirmDialog(this,
-                "Reject this trip? It will be marked as Cancelled.",
-                "Confirm Reject", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-            if (confirm == JOptionPane.YES_OPTION)
-                updateTripStatus(tripIds.get(row), "Cancelled");
-        });
-
-        btnUpdate.addActionListener(e -> {
-            int row = table.getSelectedRow();
-            if (row == -1) { JOptionPane.showMessageDialog(this, "Select a trip first!"); return; }
-            updatePanel.loadTrip(tripIds.get(row));
-            cardLayout.show(container, "UPDATE");
-        });
-
-        bottom.add(btnView);
-        bottom.add(btnCreate);
-        bottom.add(btnUpdate);
-        bottom.add(btnApprove);
-        bottom.add(btnReject);
-
-        main.add(top,    BorderLayout.NORTH);
-        main.add(scroll, BorderLayout.CENTER);
-        main.add(bottom, BorderLayout.SOUTH);
+        main.setTop(topBar);
+        main.setCenter(FxUtil.tableScroll(table));
+        main.setBottom(bottom);
         return main;
     }
 
-    private void updateTripStatus(int tripId, String newStatus) {
+    private void updateStatus(int tripId, String s) {
         try {
-            PreparedStatement ps = conn.prepareStatement(
-                "UPDATE Trip SET trip_status=? WHERE trip_id=?");
-            ps.setString(1, newStatus);
-            ps.setInt(2, tripId);
-            ps.executeUpdate();
-            loadTrips(cmbFilter.getSelectedItem().toString());
+            PreparedStatement ps = conn.prepareStatement("UPDATE Trip SET trip_status=? WHERE trip_id=?");
+            ps.setString(1,s); ps.setInt(2,tripId); ps.executeUpdate();
+            loadTrips(cmbFilter.getValue());
         } catch (Exception e) { e.printStackTrace(); }
     }
 
     void loadTrips(String filter) {
         try {
-            model.setRowCount(0);
-            tripIds.clear();
+            tableData.clear(); tripIds.clear();
             String sql =
-                "SELECT t.trip_id, " +
-                "u.first_name+' '+u.last_name AS passenger, " +
-                "ISNULL(au.first_name+' '+au.last_name, '—') AS admin_name, " +
-                "ISNULL(du.first_name+' '+du.last_name+' - '+v.vehicle_model, '—') AS assignment, " +
-                "t.start_date, t.start_time, t.end_date, t.end_time, " +
-                "t.pick_up_location, t.destination, t.passenger_count, t.trip_status " +
-                "FROM Trip t " +
-                "JOIN  Passenger p               ON t.passenger_id  = p.passenger_id " +
-                "JOIN  Users u                   ON p.passenger_id  = u.user_id " +
-                "LEFT JOIN Admin a               ON t.admin_id      = a.admin_id " +
-                "LEFT JOIN Users au              ON a.admin_id      = au.user_id " +
-                "LEFT JOIN Vehicle_Assignment va ON t.assignment_id = va.assignment_id " +
-                "LEFT JOIN Driver d              ON va.driver_id    = d.driver_id " +
-                "LEFT JOIN Users du              ON d.driver_id     = du.user_id " +
-                "LEFT JOIN Vehicle v             ON va.vehicle_id   = v.vehicle_id";
-            if (!filter.equals("All")) sql += " WHERE LOWER(t.trip_status)=LOWER(?)";
+                "SELECT t.trip_id, u.first_name+' '+u.last_name AS passenger," +
+                "ISNULL(au.first_name+' '+au.last_name,'—') AS admin_name," +
+                "ISNULL(du.first_name+' '+du.last_name+' - '+v.vehicle_model,'—') AS assignment," +
+                "t.start_date,t.start_time,t.end_date,t.end_time," +
+                "t.pick_up_location,t.destination,t.passenger_count,t.trip_status " +
+                "FROM Trip t JOIN Passenger p ON t.passenger_id=p.passenger_id JOIN Users u ON p.passenger_id=u.user_id " +
+                "LEFT JOIN Admin a ON t.admin_id=a.admin_id LEFT JOIN Users au ON a.admin_id=au.user_id " +
+                "LEFT JOIN Vehicle_Assignment va ON t.assignment_id=va.assignment_id " +
+                "LEFT JOIN Driver d ON va.driver_id=d.driver_id LEFT JOIN Users du ON d.driver_id=du.user_id " +
+                "LEFT JOIN Vehicle v ON va.vehicle_id=v.vehicle_id";
+            if (!"All".equals(filter)) sql += " WHERE LOWER(t.trip_status)=LOWER(?)";
             PreparedStatement ps = conn.prepareStatement(sql);
-            if (!filter.equals("All")) ps.setString(1, filter);
+            if (!"All".equals(filter)) ps.setString(1, filter);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 tripIds.add(rs.getInt("trip_id"));
-                model.addRow(new Object[]{
-                    rs.getInt("trip_id"),
-                    rs.getString("passenger"),
-                    rs.getString("admin_name"),
-                    rs.getString("assignment"),
-                    rs.getObject("start_date"),
-                    rs.getObject("start_time"),
-                    rs.getObject("end_date"),
-                    rs.getObject("end_time"),
-                    rs.getString("pick_up_location"),
-                    rs.getString("destination"),
-                    rs.getInt("passenger_count"),
-                    rs.getString("trip_status")
+                tableData.add(new Object[]{
+                    rs.getInt("trip_id"), rs.getString("passenger"), rs.getString("admin_name"),
+                    rs.getString("assignment"), rs.getObject("start_date"), rs.getObject("start_time"),
+                    rs.getObject("end_date"), rs.getObject("end_time"),
+                    rs.getString("pick_up_location"), rs.getString("destination"),
+                    rs.getInt("passenger_count"), rs.getString("trip_status")
                 });
             }
         } catch (Exception e) { e.printStackTrace(); }
     }
 
-
-    private java.util.List<Integer> getAvailableAssignmentIds(
-            java.sql.Date start, java.sql.Date end, int excludeTripId) {
-        java.util.List<Integer> available = new java.util.ArrayList<>();
+    private List<Integer> availableAssignments(java.sql.Date start, java.sql.Date end, int excludeTrip) {
+        List<Integer> available = new ArrayList<>();
         try {
-            PreparedStatement psAll = conn.prepareStatement(
-                "SELECT assignment_id FROM Vehicle_Assignment WHERE assignment_status='Active'");
-            ResultSet rsAll = psAll.executeQuery();
-            java.util.List<Integer> all = new java.util.ArrayList<>();
+            ResultSet rsAll = conn.prepareStatement(
+                "SELECT assignment_id FROM Vehicle_Assignment WHERE assignment_status='Active'").executeQuery();
+            List<Integer> all = new ArrayList<>();
             while (rsAll.next()) all.add(rsAll.getInt("assignment_id"));
-
-            String blockSql =
-                "SELECT DISTINCT assignment_id FROM Trip " +
-                "WHERE trip_status IN ('Pending','Approved','Completed') " +
-                "AND assignment_id IS NOT NULL " +
-                "AND NOT (end_date < ? OR start_date > ?)";
-            if (excludeTripId > 0) blockSql += " AND trip_id <> ?";
-            PreparedStatement psBlk = conn.prepareStatement(blockSql);
-            psBlk.setDate(1, start);
-            psBlk.setDate(2, end);
-            if (excludeTripId > 0) psBlk.setInt(3, excludeTripId);
-            ResultSet rsBlk = psBlk.executeQuery();
+            String blk = "SELECT DISTINCT assignment_id FROM Trip WHERE trip_status IN ('Pending','Approved','Completed')" +
+                " AND assignment_id IS NOT NULL AND NOT (end_date < ? OR start_date > ?)";
+            if (excludeTrip > 0) blk += " AND trip_id<>?";
+            PreparedStatement ps = conn.prepareStatement(blk);
+            ps.setDate(1,start); ps.setDate(2,end);
+            if (excludeTrip > 0) ps.setInt(3, excludeTrip);
+            ResultSet rsBlk = ps.executeQuery();
             java.util.Set<Integer> blocked = new java.util.HashSet<>();
             while (rsBlk.next()) blocked.add(rsBlk.getInt("assignment_id"));
-
-            for (int id : all)
-                if (!blocked.contains(id)) available.add(id);
+            for (int id : all) if (!blocked.contains(id)) available.add(id);
         } catch (Exception e) { e.printStackTrace(); }
         return available;
     }
 
-
-    public class ViewTripPanel extends JPanel {
-        private JLabel lblTripId      = valueLabel();
-        private JLabel lblPassenger   = valueLabel();
-        private JLabel lblAdmin       = valueLabel();
-        private JLabel lblAssignment  = valueLabel();
-        private JLabel lblStartDate   = valueLabel();
-        private JLabel lblStartTime   = valueLabel();
-        private JLabel lblEndDate     = valueLabel();
-        private JLabel lblEndTime     = valueLabel();
-        private JLabel lblPickup      = valueLabel();
-        private JLabel lblDestination = valueLabel();
-        private JLabel lblPax         = valueLabel();
-        private JLabel lblStatus      = valueLabel();
-
-        public ViewTripPanel() {
-            setLayout(new GridBagLayout());
-            setBackground(WHITE);
-            buildUI();
+    // ── View Trip Panel ───────────────────────────────────────────────────────
+    public class ViewTripPanel extends VBox {
+        private Label lId=vl(),lPax=vl(),lAdm=vl(),lAss=vl(),lSd=vl(),lSt=vl(),lEd=vl(),lEt=vl();
+        private Label lPk=vl(),lDst=vl(),lPc=vl(),lStatus=vl();
+        ViewTripPanel(){
+            setBackground(Background.fill(Color.WHITE)); setAlignment(Pos.CENTER);
+            VBox card=new VBox(0); card.getStyleClass().add("card"); card.setMaxWidth(560);
+            Label title=new Label("Trip Details"); title.getStyleClass().add("title-medium");
+            title.setStyle(title.getStyle()+"-fx-text-fill:#0096C7;");
+            title.setMaxWidth(Double.MAX_VALUE); title.setAlignment(Pos.CENTER);
+            GridPane grid=FxUtil.formGrid(); int y=0;
+            FxUtil.addInfoRow(grid,"Trip ID:",     lId,    y++); FxUtil.addInfoRow(grid,"Passenger:", lPax,y++);
+            FxUtil.addInfoRow(grid,"Admin:",       lAdm,   y++); FxUtil.addInfoRow(grid,"Assignment:",lAss,y++);
+            FxUtil.addInfoRow(grid,"Start Date:",  lSd,    y++); FxUtil.addInfoRow(grid,"Start Time:",lSt,y++);
+            FxUtil.addInfoRow(grid,"End Date:",    lEd,    y++); FxUtil.addInfoRow(grid,"End Time:",  lEt,y++);
+            FxUtil.addInfoRow(grid,"Pickup:",      lPk,    y++); FxUtil.addInfoRow(grid,"Destination:",lDst,y++);
+            FxUtil.addInfoRow(grid,"Pax Count:",   lPc,    y++); FxUtil.addInfoRow(grid,"Status:",   lStatus,y);
+            Button btnBack=FxUtil.btnOutlinePrimary("Back");
+            btnBack.setOnAction(e->{cards.show("LIST");loadTrips("All");});
+            HBox btnRow=new HBox(btnBack); btnRow.setAlignment(Pos.CENTER); btnRow.setPadding(new Insets(20,0,0,0));
+            card.getChildren().addAll(title,FxUtil.spacer(20),grid,btnRow);
+            getChildren().add(card);
         }
-
-        private void buildUI() {
-            JPanel card = new JPanel(new GridBagLayout());
-            card.setBackground(WHITE);
-            card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(220, 220, 220), 1, true),
-                new EmptyBorder(30, 30, 30, 30)));
-            GridBagConstraints gbc = new GridBagConstraints();
-            gbc.insets = new Insets(6, 10, 6, 10);
-            gbc.fill   = GridBagConstraints.HORIZONTAL;
-            gbc.anchor = GridBagConstraints.WEST;
-
-            JLabel title = new JLabel("Trip Details", SwingConstants.CENTER);
-            title.setFont(TITLE_FONT); title.setForeground(BLUE);
-            gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
-            gbc.insets = new Insets(0, 10, 18, 10);
-            card.add(title, gbc);
-            gbc.gridwidth = 1; gbc.insets = new Insets(6, 10, 6, 10);
-
-            int y = 1;
-            addInfoRow(card, gbc, "Trip ID:",     lblTripId,      y++);
-            addInfoRow(card, gbc, "Passenger:",   lblPassenger,   y++);
-            addInfoRow(card, gbc, "Admin:",       lblAdmin,       y++);
-            addInfoRow(card, gbc, "Assignment:",  lblAssignment,  y++);
-            addInfoRow(card, gbc, "Start Date:",  lblStartDate,   y++);
-            addInfoRow(card, gbc, "Start Time:",  lblStartTime,   y++);
-            addInfoRow(card, gbc, "End Date:",    lblEndDate,     y++);
-            addInfoRow(card, gbc, "End Time:",    lblEndTime,     y++);
-            addInfoRow(card, gbc, "Pickup:",      lblPickup,      y++);
-            addInfoRow(card, gbc, "Destination:", lblDestination, y++);
-            addInfoRow(card, gbc, "Pax Count:",   lblPax,         y++);
-            addInfoRow(card, gbc, "Status:",      lblStatus,      y++);
-
-            JButton btnBack = new JButton("Back");
-            styleButtonOutline(btnBack, BLUE);
-            btnBack.setPreferredSize(new Dimension(100, 35));
-            JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
-            btnRow.setBackground(WHITE); btnRow.add(btnBack);
-            gbc.gridx = 0; gbc.gridy = y; gbc.gridwidth = 2;
-            gbc.insets = new Insets(18, 10, 0, 10);
-            card.add(btnRow, gbc);
-            add(card);
-
-            btnBack.addActionListener(e -> { cardLayout.show(container, "LIST"); loadTrips("All"); });
-        }
-
-        public void loadTrip(int id) {
-            try {
-                PreparedStatement ps = conn.prepareStatement(
-                    "SELECT t.trip_id, " +
-                    "u.first_name+' '+u.last_name AS passenger, " +
-                    "ISNULL(au.first_name+' '+au.last_name, '—') AS admin_name, " +
-                    "ISNULL(du.first_name+' '+du.last_name+' - '+v.vehicle_model, '—') AS assignment, " +
-                    "t.start_date, t.start_time, t.end_date, t.end_time, " +
-                    "t.pick_up_location, t.destination, t.passenger_count, t.trip_status " +
-                    "FROM Trip t " +
-                    "JOIN  Passenger p               ON t.passenger_id  = p.passenger_id " +
-                    "JOIN  Users u                   ON p.passenger_id  = u.user_id " +
-                    "LEFT JOIN Admin a               ON t.admin_id      = a.admin_id " +
-                    "LEFT JOIN Users au              ON a.admin_id      = au.user_id " +
-                    "LEFT JOIN Vehicle_Assignment va ON t.assignment_id = va.assignment_id " +
-                    "LEFT JOIN Driver d              ON va.driver_id    = d.driver_id " +
-                    "LEFT JOIN Users du              ON d.driver_id     = du.user_id " +
-                    "LEFT JOIN Vehicle v             ON va.vehicle_id   = v.vehicle_id " +
-                    "WHERE t.trip_id=?");
-                ps.setInt(1, id);
-                ResultSet rs = ps.executeQuery();
-                if (rs.next()) {
-                    lblTripId.setText(String.valueOf(rs.getInt("trip_id")));
-                    lblPassenger.setText(rs.getString("passenger"));
-                    lblAdmin.setText(rs.getString("admin_name"));
-                    lblAssignment.setText(rs.getString("assignment"));
-                    lblStartDate.setText(rs.getDate("start_date") != null ? rs.getDate("start_date").toString() : "—");
-                    lblStartTime.setText(rs.getTime("start_time") != null ? rs.getTime("start_time").toString() : "—");
-                    lblEndDate.setText(rs.getDate("end_date")     != null ? rs.getDate("end_date").toString()   : "—");
-                    lblEndTime.setText(rs.getTime("end_time")     != null ? rs.getTime("end_time").toString()   : "—");
-                    lblPickup.setText(rs.getString("pick_up_location"));
-                    lblDestination.setText(rs.getString("destination"));
-                    lblPax.setText(String.valueOf(rs.getInt("passenger_count")));
-                    String s = rs.getString("trip_status");
-                    lblStatus.setText(s);
-                    lblStatus.setForeground(switch (s.toLowerCase()) {
-                        case "pending"   -> ORANGE;
-                        case "approved"  -> BLUE;
-                        case "completed" -> GREEN;
-                        case "cancelled" -> RED;
-                        default          -> Color.DARK_GRAY;
+        void load(int id){
+            try{
+                PreparedStatement ps=conn.prepareStatement(
+                    "SELECT t.trip_id,u.first_name+' '+u.last_name AS passenger,ISNULL(au.first_name+' '+au.last_name,'—') AS admin_name," +
+                    "ISNULL(du.first_name+' '+du.last_name+' - '+v.vehicle_model,'—') AS assignment," +
+                    "t.start_date,t.start_time,t.end_date,t.end_time,t.pick_up_location,t.destination,t.passenger_count,t.trip_status " +
+                    "FROM Trip t JOIN Passenger p ON t.passenger_id=p.passenger_id JOIN Users u ON p.passenger_id=u.user_id " +
+                    "LEFT JOIN Admin a ON t.admin_id=a.admin_id LEFT JOIN Users au ON a.admin_id=au.user_id " +
+                    "LEFT JOIN Vehicle_Assignment va ON t.assignment_id=va.assignment_id " +
+                    "LEFT JOIN Driver d ON va.driver_id=d.driver_id LEFT JOIN Users du ON d.driver_id=du.user_id " +
+                    "LEFT JOIN Vehicle v ON va.vehicle_id=v.vehicle_id WHERE t.trip_id=?");
+                ps.setInt(1,id); ResultSet rs=ps.executeQuery();
+                if(rs.next()){
+                    lId.setText(String.valueOf(rs.getInt("trip_id")));
+                    lPax.setText(rs.getString("passenger")); lAdm.setText(rs.getString("admin_name"));
+                    lAss.setText(rs.getString("assignment"));
+                    lSd.setText(rs.getDate("start_date")!=null?rs.getDate("start_date").toString():"—");
+                    lSt.setText(rs.getTime("start_time")!=null?rs.getTime("start_time").toString():"—");
+                    lEd.setText(rs.getDate("end_date")!=null?rs.getDate("end_date").toString():"—");
+                    lEt.setText(rs.getTime("end_time")!=null?rs.getTime("end_time").toString():"—");
+                    lPk.setText(rs.getString("pick_up_location")); lDst.setText(rs.getString("destination"));
+                    lPc.setText(String.valueOf(rs.getInt("passenger_count")));
+                    String s=rs.getString("trip_status"); lStatus.setText(s);
+                    lStatus.setStyle(switch(s.toLowerCase()){
+                        case "pending"   -> "-fx-text-fill:#E67E22;-fx-font-weight:bold;";
+                        case "approved"  -> "-fx-text-fill:#0096C7;-fx-font-weight:bold;";
+                        case "completed" -> "-fx-text-fill:#27AE60;-fx-font-weight:bold;";
+                        case "cancelled" -> "-fx-text-fill:#DC3545;-fx-font-weight:bold;";
+                        default          -> "-fx-font-weight:bold;";
                     });
-                    lblStatus.setFont(new Font("Segoe UI", Font.BOLD, 13));
                 }
-            } catch (Exception e) { e.printStackTrace(); }
+            }catch(Exception e){e.printStackTrace();}
+        }
+        //private Label vl(){Label l=new Label();l.getStyleClass().add("form-label");return l;}
+    }
+
+    // ── Create Trip Panel ─────────────────────────────────────────────────────
+    public class CreateTripPanel extends VBox {
+        private ComboBox<String> cmbPass=new ComboBox<>(), cmbAss=new ComboBox<>();
+        private ComboBox<String> cmbStatus=FxUtil.styledCombo(FXCollections.observableArrayList("Pending","Approved","Completed","Cancelled"));
+        private TextField txtSd=FxUtil.styledField(),txtSt=FxUtil.styledField(),txtEd=FxUtil.styledField(),txtEt=FxUtil.styledField();
+        private TextField txtPk=FxUtil.styledField(),txtDst=FxUtil.styledField(),txtPax=FxUtil.styledField(),txtAdmin=FxUtil.readonlyField();
+        private Label lblStatus=FxUtil.statusLabel();
+        private int[] passengerIds=new int[0], assignmentIds=new int[0], assignCaps=new int[0];
+
+        CreateTripPanel(){
+            setBackground(Background.fill(Color.WHITE)); setAlignment(Pos.CENTER);
+            cmbStatus.setValue("Pending");
+            cmbPass.getStyleClass().add("combo-field"); cmbPass.setPrefWidth(260);
+            cmbAss.getStyleClass().add("combo-field"); cmbAss.setPrefWidth(260);
+            VBox card=new VBox(0); card.getStyleClass().add("card"); card.setMaxWidth(560);
+            Label title=new Label("Create Trip"); title.getStyleClass().add("title-medium");
+            title.setMaxWidth(Double.MAX_VALUE); title.setAlignment(Pos.CENTER);
+            GridPane form=FxUtil.formGrid(); int y=0;
+            FxUtil.addFormRow(form,"Passenger:",  cmbPass, y++); FxUtil.addFormRow(form,"Admin:",     txtAdmin,y++);
+            FxUtil.addFormRow(form,"Start Date:", txtSd,   y++); FxUtil.addFormRow(form,"Start Time:",txtSt,  y++);
+            FxUtil.addFormRow(form,"End Date:",   txtEd,   y++); FxUtil.addFormRow(form,"End Time:",  txtEt,  y++);
+            FxUtil.addFormRow(form,"Assignment:", cmbAss,  y++); FxUtil.addFormRow(form,"Pickup:",    txtPk,  y++);
+            FxUtil.addFormRow(form,"Destination:",txtDst,  y++); FxUtil.addFormRow(form,"Pax Count:", txtPax, y++);
+            FxUtil.addFormRow(form,"Status:",     cmbStatus,y);
+            Label hint=new Label("* Enter dates first, then click Check to see available assignments.");
+            hint.setStyle("-fx-font-style:italic;-fx-font-size:11px;-fx-text-fill:#888;");
+            Button btnCheck=FxUtil.btnOutlinePrimary("Check Available Assignments");
+            btnCheck.setOnAction(e->checkAvailability());
+            Button btnSave=FxUtil.btnPrimary("Save"), btnBack=FxUtil.btnOutlinePrimary("Back");
+            btnSave.setOnAction(e->save()); btnBack.setOnAction(e->{cards.show("LIST");loadTrips("All");});
+            HBox btnRow=new HBox(15,btnSave,btnBack); btnRow.setAlignment(Pos.CENTER); btnRow.setPadding(new Insets(15,0,0,0));
+            card.getChildren().addAll(title,FxUtil.spacer(20),form,FxUtil.spacer(6),hint,FxUtil.spacer(8),btnCheck,FxUtil.spacer(14),btnRow,FxUtil.spacer(10),lblStatus);
+            ScrollPane sp=new ScrollPane(card); sp.setFitToWidth(true); sp.getStyleClass().add("edge-to-edge");
+            getChildren().add(sp);
+        }
+        public void setAdminId(int id){}
+        void resetFields(){
+            loadPassengers(); cmbAss.getItems().clear();
+            assignmentIds=new int[0]; assignCaps=new int[0];
+            txtSd.clear(); txtSt.setText("HH:MM"); txtEd.clear(); txtEt.setText("HH:MM");
+            txtPk.clear(); txtDst.clear(); txtPax.clear(); cmbStatus.setValue("Pending");
+            lblStatus.setText(" "); txtAdmin.setText(loggedInAdminName);
+        }
+        private void loadPassengers(){
+            try{
+                cmbPass.getItems().clear(); List<Integer> ids=new ArrayList<>();
+                PreparedStatement ps=conn.prepareStatement("SELECT p.passenger_id, u.first_name+' '+u.last_name AS name FROM Passenger p JOIN Users u ON p.passenger_id=u.user_id WHERE u.user_status='Active'");
+                ResultSet rs=ps.executeQuery();
+                while(rs.next()){cmbPass.getItems().add(rs.getString("name"));ids.add(rs.getInt("passenger_id"));}
+                passengerIds=ids.stream().mapToInt(i->i).toArray();
+            }catch(Exception e){e.printStackTrace();}
+        }
+        private void checkAvailability(){
+            java.sql.Date s,e2;
+            try{s=java.sql.Date.valueOf(txtSd.getText().trim());}
+            catch(Exception ex){FxUtil.setError(lblStatus,"Invalid start date! Use yyyy-MM-dd");return;}
+            try{e2=java.sql.Date.valueOf(txtEd.getText().trim());}
+            catch(Exception ex){FxUtil.setError(lblStatus,"Invalid end date! Use yyyy-MM-dd");return;}
+            if(!s.toLocalDate().isAfter(LocalDate.now().minusDays(1))){FxUtil.setError(lblStatus,"Start date cannot be in the past!");return;}
+            if(e2.before(s)){FxUtil.setError(lblStatus,"End date must be after start date!");return;}
+            List<Integer> avail=availableAssignments(s,e2,-1);
+            if(avail.isEmpty()){FxUtil.setError(lblStatus,"No available assignments for these dates!");cmbAss.getItems().clear();return;}
+            try{
+                cmbAss.getItems().clear(); List<Integer> aIds=new ArrayList<>(), caps=new ArrayList<>();
+                for(int aId:avail){
+                    PreparedStatement ps=conn.prepareStatement(
+                        "SELECT va.assignment_id,du.first_name+' '+du.last_name+' - '+v.vehicle_model AS label,v.passenger_capacity " +
+                        "FROM Vehicle_Assignment va JOIN Driver d ON va.driver_id=d.driver_id JOIN Users du ON d.driver_id=du.user_id " +
+                        "JOIN Vehicle v ON va.vehicle_id=v.vehicle_id WHERE va.assignment_id=?");
+                    ps.setInt(1,aId); ResultSet rs=ps.executeQuery();
+                    if(rs.next()){cmbAss.getItems().add(rs.getString("label")+" (Cap: "+rs.getInt("passenger_capacity")+")");aIds.add(aId);caps.add(rs.getInt("passenger_capacity"));}
+                }
+                assignmentIds=aIds.stream().mapToInt(i->i).toArray();
+                assignCaps=caps.stream().mapToInt(i->i).toArray();
+                FxUtil.setSuccess(lblStatus,aIds.size()+" assignment(s) available.");
+            }catch(Exception ex){ex.printStackTrace();}
+        }
+        private java.sql.Time parseTime(String s) throws Exception{if(s.matches("\\d{2}:\\d{2}"))s+=":00";return java.sql.Time.valueOf(s);}
+        private void save(){
+            if(loggedInAdminId<=0){FxUtil.setError(lblStatus,"No logged-in admin!");return;}
+            if(passengerIds.length==0){FxUtil.setError(lblStatus,"No passengers available!");return;}
+            if(assignmentIds.length==0){FxUtil.setError(lblStatus,"Run Check Available Assignments first!");return;}
+            if(txtPk.getText().trim().isEmpty()){FxUtil.setError(lblStatus,"Pickup required!");return;}
+            if(txtDst.getText().trim().isEmpty()){FxUtil.setError(lblStatus,"Destination required!");return;}
+            java.sql.Date sd,ed; java.sql.Time st,et;
+            try{sd=java.sql.Date.valueOf(txtSd.getText().trim());}catch(Exception ex){FxUtil.setError(lblStatus,"Invalid start date!");return;}
+            try{ed=java.sql.Date.valueOf(txtEd.getText().trim());}catch(Exception ex){FxUtil.setError(lblStatus,"Invalid end date!");return;}
+            if(!sd.toLocalDate().isAfter(LocalDate.now().minusDays(1))){FxUtil.setError(lblStatus,"Start date cannot be in the past!");return;}
+            if(ed.before(sd)){FxUtil.setError(lblStatus,"End date must be after start date!");return;}
+            try{st=parseTime(txtSt.getText().trim());}catch(Exception ex){FxUtil.setError(lblStatus,"Invalid start time! Use HH:MM");return;}
+            try{et=parseTime(txtEt.getText().trim());}catch(Exception ex){FxUtil.setError(lblStatus,"Invalid end time! Use HH:MM");return;}
+            int pax; try{pax=Integer.parseInt(txtPax.getText().trim());if(pax<=0)throw new Exception();}
+            catch(Exception ex){FxUtil.setError(lblStatus,"Pax count must be a positive number!");return;}
+            int selIdx=cmbAss.getSelectionModel().getSelectedIndex();
+            if(selIdx<0){FxUtil.setError(lblStatus,"Select an assignment!");return;}
+            int selAid=assignmentIds[selIdx];
+            if(pax>assignCaps[selIdx]){FxUtil.setError(lblStatus,"Pax count exceeds vehicle capacity ("+assignCaps[selIdx]+")!");return;}
+            if(!availableAssignments(sd,ed,-1).contains(selAid)){FxUtil.setError(lblStatus,"Assignment no longer available!");return;}
+            try{
+                PreparedStatement ps=conn.prepareStatement(
+                    "INSERT INTO Trip (passenger_id,admin_id,assignment_id,start_date,start_time,end_date,end_time,pick_up_location,destination,passenger_count,trip_status) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
+                ps.setInt(1,passengerIds[cmbPass.getSelectionModel().getSelectedIndex()]); ps.setInt(2,loggedInAdminId);
+                ps.setInt(3,selAid); ps.setDate(4,sd); ps.setTime(5,st); ps.setDate(6,ed); ps.setTime(7,et);
+                ps.setString(8,txtPk.getText().trim()); ps.setString(9,txtDst.getText().trim());
+                ps.setInt(10,pax); ps.setString(11,cmbStatus.getValue()); ps.executeUpdate();
+                FxUtil.setSuccess(lblStatus,"Trip created successfully!"); loadTrips("All");
+            }catch(Exception e){FxUtil.setError(lblStatus,"Error creating trip! "+e.getMessage());e.printStackTrace();}
         }
     }
 
-
-    public class CreateTripPanel extends JPanel {
-        private JComboBox<String> cmbPassenger  = new JComboBox<>();
-        private JComboBox<String> cmbAssignment = new JComboBox<>();
-        private JComboBox<String> cmbStatus     = new JComboBox<>(
-                new String[]{"Pending", "Approved", "Completed", "Cancelled"});
-        private JTextField txtStartDate   = styledField();
-        private JTextField txtStartTime   = styledField();
-        private JTextField txtEndDate     = styledField();
-        private JTextField txtEndTime     = styledField();
-        private JTextField txtPickup      = styledField();
-        private JTextField txtDestination = styledField();
-        private JTextField txtPaxCount    = styledField();
-        private JTextField txtAdmin       = styledField();
-        private JLabel     lblStatus      = new JLabel(" ");
-
-        private int[] passengerIds         = new int[0];
-        private int[] assignmentIds        = new int[0];
-        private int[] assignmentCapacities = new int[0];
-
-        public CreateTripPanel() {
-            setLayout(new GridBagLayout());
-            setBackground(WHITE);
-            buildUI();
+    // ── Update Trip Panel ─────────────────────────────────────────────────────
+    public class UpdateTripPanel extends VBox {
+        private int tripId=-1;
+        private ComboBox<String> cmbPass=new ComboBox<>(), cmbAss=new ComboBox<>();
+        private ComboBox<String> cmbStatus=FxUtil.styledCombo(FXCollections.observableArrayList("Pending","Approved","Completed","Cancelled"));
+        private TextField txtSd=FxUtil.styledField(),txtSt=FxUtil.styledField(),txtEd=FxUtil.styledField(),txtEt=FxUtil.styledField();
+        private TextField txtPk=FxUtil.styledField(),txtDst=FxUtil.styledField(),txtPax=FxUtil.styledField(),txtAdmin=FxUtil.readonlyField();
+        private Label lblStatus=FxUtil.statusLabel();
+        private int[] passengerIds = new int[0];
+        private int[] assignmentIds = new int[0];
+        private int[] assignCaps = new int[0];
+        private int curAssignId = -1;
+        
+        UpdateTripPanel(){
+            setBackground(Background.fill(Color.WHITE)); setAlignment(Pos.CENTER);
+            cmbPass.getStyleClass().add("combo-field"); cmbPass.setPrefWidth(260);
+            cmbAss.getStyleClass().add("combo-field"); cmbAss.setPrefWidth(260);
+            VBox card=new VBox(0); card.getStyleClass().add("card"); card.setMaxWidth(560);
+            Label title=new Label("Update Trip"); title.getStyleClass().add("title-medium");
+            title.setMaxWidth(Double.MAX_VALUE); title.setAlignment(Pos.CENTER);
+            GridPane form=FxUtil.formGrid(); int y=0;
+            FxUtil.addFormRow(form,"Passenger:",  cmbPass,   y++); FxUtil.addFormRow(form,"Admin:",     txtAdmin,  y++);
+            FxUtil.addFormRow(form,"Assignment:", cmbAss,    y++); FxUtil.addFormRow(form,"Start Date:",txtSd,     y++);
+            FxUtil.addFormRow(form,"Start Time:", txtSt,     y++); FxUtil.addFormRow(form,"End Date:",  txtEd,     y++);
+            FxUtil.addFormRow(form,"End Time:",   txtEt,     y++); FxUtil.addFormRow(form,"Pickup:",    txtPk,     y++);
+            FxUtil.addFormRow(form,"Destination:",txtDst,    y++); FxUtil.addFormRow(form,"Pax Count:", txtPax,    y++);
+            FxUtil.addFormRow(form,"Status:",     cmbStatus, y);
+            Button btnUpd=FxUtil.btnPrimary("Update"), btnBack=FxUtil.btnOutlinePrimary("Back");
+            btnUpd.setOnAction(e->update()); btnBack.setOnAction(e->{cards.show("LIST");loadTrips("All");});
+            HBox btnRow=new HBox(15,btnUpd,btnBack); btnRow.setAlignment(Pos.CENTER); btnRow.setPadding(new Insets(20,0,0,0));
+            card.getChildren().addAll(title,FxUtil.spacer(20),form,btnRow,FxUtil.spacer(10),lblStatus);
+            ScrollPane sp=new ScrollPane(card); sp.setFitToWidth(true); sp.getStyleClass().add("edge-to-edge");
+            getChildren().add(sp);
         }
+        void load(int id){
+            tripId=id; lblStatus.setText(" "); loadDropdowns(); txtAdmin.setText(loggedInAdminName);
+            try{
+                PreparedStatement ps=conn.prepareStatement("SELECT * FROM Trip WHERE trip_id=?");
+                ps.setInt(1,id); ResultSet rs=ps.executeQuery();
+                if(rs.next()){
+                	int pId = rs.getInt("passenger_id");
 
-        public void setAdminId(int id) {}
-
-        public void resetFields() {
-            loadPassengers();
-            cmbAssignment.removeAllItems();
-            assignmentIds        = new int[0];
-            assignmentCapacities = new int[0];
-            txtStartDate.setText("");
-            txtStartTime.setText("HH:MM");
-            txtEndDate.setText("");
-            txtEndTime.setText("HH:MM");
-            txtPickup.setText("");
-            txtDestination.setText("");
-            txtPaxCount.setText("");
-            cmbStatus.setSelectedIndex(0);
-            lblStatus.setText(" ");
-            txtAdmin.setText(loggedInAdminName);
-        }
-
-        private void loadPassengers() {
-            try {
-                cmbPassenger.removeAllItems();
-                PreparedStatement ps = conn.prepareStatement(
-                    "SELECT p.passenger_id, u.first_name+' '+u.last_name AS name " +
-                    "FROM Passenger p JOIN Users u ON p.passenger_id=u.user_id " +
-                    "WHERE u.user_status='Active'");
-                ResultSet rs = ps.executeQuery();
-                java.util.List<Integer> ids = new java.util.ArrayList<>();
-                while (rs.next()) {
-                    cmbPassenger.addItem(rs.getString("name"));
-                    ids.add(rs.getInt("passenger_id"));
+                	Integer aIdObj = (Integer) rs.getObject("assignment_id");
+                	curAssignId = (aIdObj != null) ? aIdObj : -1;
+                    
+                	for(int i=0;i<passengerIds.length;i++) if(passengerIds[i]==pId){
+                		cmbPass.getSelectionModel().select(i);
+                		break;
+                	}
+                   
+                    if(curAssignId!=-1) 
+                        for(int i=0;i<assignmentIds.length;i++) 
+                            if(assignmentIds[i]==curAssignId){
+                                cmbAss.getSelectionModel().select(i);
+                                break;
+                            }                    
+                    
+                    txtSd.setText(rs.getDate("start_date")!=null?rs.getDate("start_date").toString():"");
+                    txtSt.setText(rs.getTime("start_time")!=null?rs.getTime("start_time").toString():"HH:MM");
+                    txtEd.setText(rs.getDate("end_date")!=null?rs.getDate("end_date").toString():"");
+                    txtEt.setText(rs.getTime("end_time")!=null?rs.getTime("end_time").toString():"HH:MM");
+                    txtPk.setText(rs.getString("pick_up_location")); txtDst.setText(rs.getString("destination"));
+                    txtPax.setText(String.valueOf(rs.getInt("passenger_count"))); cmbStatus.setValue(rs.getString("trip_status"));
                 }
-                passengerIds = ids.stream().mapToInt(i -> i).toArray();
-            } catch (Exception e) { e.printStackTrace(); }
+            }catch(Exception e){e.printStackTrace();}
         }
-
-        private void buildUI() {
-            JPanel card = new JPanel();
-            card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-            card.setBackground(WHITE);
-            card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(220, 220, 220), 1, true),
-                new EmptyBorder(30, 30, 30, 30)));
-
-            JLabel title = new JLabel("Create Trip", SwingConstants.CENTER);
-            title.setFont(TITLE_FONT);
-            title.setForeground(new Color(30, 30, 30));
-            title.setAlignmentX(Component.CENTER_ALIGNMENT);
-            card.add(title);
-            card.add(Box.createVerticalStrut(20));
-
-            cmbPassenger.setPreferredSize(new Dimension(260, 32));
-            cmbAssignment.setPreferredSize(new Dimension(260, 32));
-            cmbStatus.setPreferredSize(new Dimension(260, 32));
-
-            txtAdmin.setEditable(false);
-            txtAdmin.setBackground(new Color(240, 240, 240));
-            txtAdmin.setText(loggedInAdminName);
-
-            JPanel form = new JPanel(new GridBagLayout());
-            form.setBackground(WHITE);
-            GridBagConstraints gbc = new GridBagConstraints();
-            gbc.insets = new Insets(6, 10, 6, 10);
-            gbc.fill   = GridBagConstraints.HORIZONTAL;
-            gbc.anchor = GridBagConstraints.WEST;
-
-            int y = 0;
-            addFormRow(form, gbc, "Passenger:",   cmbPassenger,   y++);
-            addFormRow(form, gbc, "Admin:",        txtAdmin,      y++);
-            addFormRow(form, gbc, "Start Date:",  txtStartDate,   y++);
-            addFormRow(form, gbc, "Start Time:",  txtStartTime,   y++);
-            addFormRow(form, gbc, "End Date:",    txtEndDate,     y++);
-            addFormRow(form, gbc, "End Time:",    txtEndTime,     y++);
-            addFormRow(form, gbc, "Assignment:",  cmbAssignment,  y++);
-            addFormRow(form, gbc, "Pickup:",      txtPickup,      y++);
-            addFormRow(form, gbc, "Destination:", txtDestination, y++);
-            addFormRow(form, gbc, "Pax Count:",   txtPaxCount,    y++);
-            addFormRow(form, gbc, "Status:",      cmbStatus,      y++);
-
-            JLabel hint = new JLabel("* Enter dates first, then click Check to see available assignments.");
-            hint.setFont(new Font("Segoe UI", Font.ITALIC, 11));
-            hint.setForeground(Color.GRAY);
-            hint.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-            card.add(form);
-            card.add(Box.createVerticalStrut(6));
-            card.add(hint);
-            card.add(Box.createVerticalStrut(10));
-
-            JButton btnCheck = new JButton("Check Available Assignments");
-            styleButtonOutline(btnCheck, BLUE);
-            btnCheck.setAlignmentX(Component.CENTER_ALIGNMENT);
-            btnCheck.setMaximumSize(new Dimension(280, 34));
-            card.add(btnCheck);
-            card.add(Box.createVerticalStrut(14));
-
-            JButton btnSave = new JButton("Save");
-            JButton btnBack = new JButton("Back");
-            styleButtonFilled(btnSave, BLUE);
-            styleButtonOutline(btnBack, BLUE);
-            btnSave.setPreferredSize(new Dimension(100, 35));
-            btnBack.setPreferredSize(new Dimension(100, 35));
-            JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
-            btnRow.setBackground(WHITE);
-            btnRow.add(btnSave); btnRow.add(btnBack);
-            card.add(btnRow);
-            card.add(Box.createVerticalStrut(10));
-
-            lblStatus.setFont(LABEL_FONT);
-            lblStatus.setAlignmentX(Component.CENTER_ALIGNMENT);
-            card.add(lblStatus);
-
-            JScrollPane scroll = new JScrollPane(card,
-                JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-            scroll.setBorder(null);
-            scroll.getViewport().setBackground(WHITE);
-            add(scroll, new GridBagConstraints());
-
-            btnCheck.addActionListener(e -> checkAvailability());
-            btnSave.addActionListener(e  -> save());
-            btnBack.addActionListener(e  -> { cardLayout.show(container, "LIST"); loadTrips("All"); });
+        private void loadDropdowns(){
+            try{
+                cmbPass.getItems().clear(); List<Integer> pIds=new ArrayList<>();
+                ResultSet rsP=conn.prepareStatement("SELECT p.passenger_id,u.first_name+' '+u.last_name AS name FROM Passenger p JOIN Users u ON p.passenger_id=u.user_id WHERE u.user_status='Active'").executeQuery();
+                while(rsP.next()){cmbPass.getItems().add(rsP.getString("name"));pIds.add(rsP.getInt("passenger_id"));}
+                passengerIds=pIds.stream().mapToInt(i->i).toArray();
+                cmbAss.getItems().clear(); List<Integer> aIds=new ArrayList<>(), caps=new ArrayList<>();
+                ResultSet rsA=conn.prepareStatement("SELECT va.assignment_id,du.first_name+' '+du.last_name+' - '+v.vehicle_model AS label,v.passenger_capacity FROM Vehicle_Assignment va JOIN Driver d ON va.driver_id=d.driver_id JOIN Users du ON d.driver_id=du.user_id JOIN Vehicle v ON va.vehicle_id=v.vehicle_id").executeQuery();
+                while(rsA.next()){cmbAss.getItems().add(rsA.getString("label")+" (Cap: "+rsA.getInt("passenger_capacity")+")");aIds.add(rsA.getInt("assignment_id"));caps.add(rsA.getInt("passenger_capacity"));}
+                assignmentIds=aIds.stream().mapToInt(i->i).toArray(); assignCaps=caps.stream().mapToInt(i->i).toArray();
+            }catch(Exception e){e.printStackTrace();}
         }
-
-        private void checkAvailability() {
-            java.sql.Date start, end;
-            try { start = java.sql.Date.valueOf(txtStartDate.getText().trim()); }
-            catch (Exception ex) { showError("Invalid start date! Use yyyy-MM-dd"); return; }
-            try { end = java.sql.Date.valueOf(txtEndDate.getText().trim()); }
-            catch (Exception ex) { showError("Invalid end date! Use yyyy-MM-dd"); return; }
-            if (!start.toLocalDate().isAfter(LocalDate.now().minusDays(1))) {
-                showError("Start date cannot be in the past!"); return;
+        private java.sql.Time parseTime(String s) throws Exception{if(s.matches("\\d{2}:\\d{2}"))s+=":00";return java.sql.Time.valueOf(s);}
+        private void update(){
+            if(tripId==-1)return;
+            if(loggedInAdminId<=0){FxUtil.setError(lblStatus,"No logged-in admin!");return;}
+            if(txtPk.getText().trim().isEmpty()){FxUtil.setError(lblStatus,"Pickup required!");return;}
+            if(txtDst.getText().trim().isEmpty()){FxUtil.setError(lblStatus,"Destination required!");return;}
+            java.sql.Date sd,ed; java.sql.Time st,et;
+            try{sd=java.sql.Date.valueOf(txtSd.getText().trim());}catch(Exception ex){FxUtil.setError(lblStatus,"Invalid start date!");return;}
+            try{ed=java.sql.Date.valueOf(txtEd.getText().trim());}catch(Exception ex){FxUtil.setError(lblStatus,"Invalid end date!");return;}
+            if(!sd.toLocalDate().isAfter(LocalDate.now().minusDays(1))){FxUtil.setError(lblStatus,"Start date cannot be in the past!");return;}
+            if(ed.before(sd)){FxUtil.setError(lblStatus,"End date must be after start date!");return;}
+            try{st=parseTime(txtSt.getText().trim());}catch(Exception ex){FxUtil.setError(lblStatus,"Invalid start time!");return;}
+            try{et=parseTime(txtEt.getText().trim());}catch(Exception ex){FxUtil.setError(lblStatus,"Invalid end time!");return;}
+            int pax; try{pax=Integer.parseInt(txtPax.getText().trim());if(pax<=0)throw new Exception();}
+            catch(Exception ex){FxUtil.setError(lblStatus,"Pax count must be positive!");return;}
+            int selIdx=cmbAss.getSelectionModel().getSelectedIndex();
+            int selAid=(selIdx>=0&&assignmentIds.length>0)?assignmentIds[selIdx]:-1;
+            if(selAid!=-1){
+                if(pax>assignCaps[selIdx]){FxUtil.setError(lblStatus,"Pax count exceeds vehicle capacity ("+assignCaps[selIdx]+")!");return;}
+                if(!availableAssignments(sd,ed,tripId).contains(selAid)){FxUtil.setError(lblStatus,"Assignment has overlapping trip!");return;}
             }
-            if (end.before(start)) { showError("End date must be after start date!"); return; }
-
-            java.util.List<Integer> avail = getAvailableAssignmentIds(start, end, -1);
-            if (avail.isEmpty()) {
-                showError("No available assignments for these dates!");
-                cmbAssignment.removeAllItems();
-                assignmentIds = new int[0]; assignmentCapacities = new int[0];
-                return;
-            }
-            try {
-                cmbAssignment.removeAllItems();
-                java.util.List<Integer> aIds = new java.util.ArrayList<>();
-                java.util.List<Integer> caps = new java.util.ArrayList<>();
-                for (int aId : avail) {
-                    PreparedStatement ps = conn.prepareStatement(
-                        "SELECT va.assignment_id, " +
-                        "du.first_name+' '+du.last_name+' - '+v.vehicle_model AS label, " +
-                        "v.passenger_capacity " +
-                        "FROM Vehicle_Assignment va " +
-                        "JOIN Driver d  ON va.driver_id  = d.driver_id " +
-                        "JOIN Users du  ON d.driver_id   = du.user_id " +
-                        "JOIN Vehicle v ON va.vehicle_id = v.vehicle_id " +
-                        "WHERE va.assignment_id=?");
-                    ps.setInt(1, aId);
-                    ResultSet rs = ps.executeQuery();
-                    if (rs.next()) {
-                        // Show capacity in the label so admin can see vehicle limit
-                        cmbAssignment.addItem(rs.getString("label") +
-                            " (Cap: " + rs.getInt("passenger_capacity") + ")");
-                        aIds.add(aId); caps.add(rs.getInt("passenger_capacity"));
-                    }
-                }
-                assignmentIds        = aIds.stream().mapToInt(i -> i).toArray();
-                assignmentCapacities = caps.stream().mapToInt(i -> i).toArray();
-                lblStatus.setForeground(new Color(0, 150, 80));
-                lblStatus.setText(aIds.size() + " assignment(s) available for these dates.");
-            } catch (Exception ex) { ex.printStackTrace(); }
-        }
-
-        private java.sql.Time parseTime(String s) throws Exception {
-            if (s.matches("\\d{2}:\\d{2}")) s += ":00";
-            return java.sql.Time.valueOf(s);
-        }
-
-        private void save() {
-            if (loggedInAdminId <= 0) { showError("No logged-in admin detected!"); return; }
-            if (passengerIds.length == 0)  { showError("No passengers available!"); return; }
-            if (assignmentIds.length == 0) { showError("Run 'Check Available Assignments' first!"); return; }
-            if (txtPickup.getText().trim().isEmpty())      { showError("Pickup is required!");      return; }
-            if (txtDestination.getText().trim().isEmpty()) { showError("Destination is required!"); return; }
-
-            java.sql.Date startDate, endDate;
-            try { startDate = java.sql.Date.valueOf(txtStartDate.getText().trim()); }
-            catch (Exception ex) { showError("Invalid start date! Use yyyy-MM-dd"); return; }
-            try { endDate = java.sql.Date.valueOf(txtEndDate.getText().trim()); }
-            catch (Exception ex) { showError("Invalid end date! Use yyyy-MM-dd"); return; }
-            if (!startDate.toLocalDate().isAfter(LocalDate.now().minusDays(1))) {
-                showError("Start date cannot be in the past!"); return;
-            }
-            if (endDate.before(startDate)) { showError("End date must be after start date!"); return; }
-
-            java.sql.Time startTime, endTime;
-            try { startTime = parseTime(txtStartTime.getText().trim()); }
-            catch (Exception ex) { showError("Invalid start time! Use HH:MM"); return; }
-            try { endTime = parseTime(txtEndTime.getText().trim()); }
-            catch (Exception ex) { showError("Invalid end time! Use HH:MM"); return; }
-
-            int paxCount;
-            try { paxCount = Integer.parseInt(txtPaxCount.getText().trim()); }
-            catch (Exception ex) { showError("Pax count must be a number!"); return; }
-            if (paxCount <= 0) { showError("Pax count must be > 0!"); return; }
-
-            int selIdx      = cmbAssignment.getSelectedIndex();
-            if (selIdx < 0) { showError("Please select an assignment!"); return; }
-            int selAssignId = assignmentIds[selIdx];
-
-            // VALIDATION: pax count must not exceed the selected vehicle's capacity
-            int vehicleCapacity = assignmentCapacities[selIdx];
-            if (paxCount > vehicleCapacity) {
-                showError("Pax count (" + paxCount + ") exceeds vehicle capacity (" + vehicleCapacity + ")!");
-                return;
-            }
-
-            if (!getAvailableAssignmentIds(startDate, endDate, -1).contains(selAssignId)) {
-                showError("Assignment is no longer available — please re-check!"); return;
-            }
-
-            try {
-                PreparedStatement ps = conn.prepareStatement(
-                    "INSERT INTO Trip (passenger_id,admin_id,assignment_id,start_date,start_time," +
-                    "end_date,end_time,pick_up_location,destination,passenger_count,trip_status) " +
-                    "VALUES (?,?,?,?,?,?,?,?,?,?,?)");
-                ps.setInt(1,     passengerIds[cmbPassenger.getSelectedIndex()]);
-                ps.setInt(2,     loggedInAdminId);
-                ps.setInt(3,     selAssignId);
-                ps.setDate(4,    startDate);
-                ps.setTime(5,    startTime);
-                ps.setDate(6,    endDate);
-                ps.setTime(7,    endTime);
-                ps.setString(8,  txtPickup.getText().trim());
-                ps.setString(9,  txtDestination.getText().trim());
-                ps.setInt(10,    paxCount);
-                ps.setString(11, cmbStatus.getSelectedItem().toString());
+            try{
+                PreparedStatement ps=conn.prepareStatement(
+                    "UPDATE Trip SET passenger_id=?,admin_id=?,assignment_id=?,start_date=?,start_time=?,end_date=?,end_time=?,pick_up_location=?,destination=?,passenger_count=?,trip_status=? WHERE trip_id=?");
+                ps.setInt(1,passengerIds[cmbPass.getSelectionModel().getSelectedIndex()]); ps.setInt(2,loggedInAdminId);
+                if(selAid!=-1) ps.setInt(3,selAid); else ps.setNull(3,Types.INTEGER);
+                ps.setDate(4,sd);ps.setTime(5,st);ps.setDate(6,ed);ps.setTime(7,et);
+                ps.setString(8,txtPk.getText().trim());ps.setString(9,txtDst.getText().trim());
+                ps.setInt(10,pax);ps.setString(11,cmbStatus.getValue());ps.setInt(12,tripId);
                 ps.executeUpdate();
-                lblStatus.setForeground(new Color(0, 150, 80));
-                lblStatus.setText("Trip created successfully!");
-                loadTrips("All");
-            } catch (Exception e) {
-                showError("Error creating trip! " + e.getMessage());
-                e.printStackTrace();
-            }
+                FxUtil.setSuccess(lblStatus,"Trip updated successfully!"); loadTrips("All");
+            }catch(Exception e){FxUtil.setError(lblStatus,"Error updating trip! "+e.getMessage());e.printStackTrace();}
         }
-
-        private void showError(String m) { lblStatus.setForeground(RED); lblStatus.setText(m); }
     }
 
-
-    public class UpdateTripPanel extends JPanel {
-        private int tripId = -1;
-        private JComboBox<String> cmbPassenger  = new JComboBox<>();
-        private JComboBox<String> cmbAssignment = new JComboBox<>();
-        private JComboBox<String> cmbStatus     = new JComboBox<>(
-                new String[]{"Pending", "Approved", "Completed", "Cancelled"});
-        private JTextField txtStartDate   = styledField();
-        private JTextField txtStartTime   = styledField();
-        private JTextField txtEndDate     = styledField();
-        private JTextField txtEndTime     = styledField();
-        private JTextField txtPickup      = styledField();
-        private JTextField txtDestination = styledField();
-        private JTextField txtPaxCount    = styledField();
-        private JTextField txtAdmin       = styledField();
-        private JLabel     lblStatus      = new JLabel(" ");
-
-        private int[] passengerIds         = new int[0];
-        private int[] assignmentIds        = new int[0];
-        private int[] assignmentCapacities = new int[0];
-        private int   currentAssignmentId  = -1;
-
-        public UpdateTripPanel() {
-            setLayout(new GridBagLayout());
-            setBackground(WHITE);
-            buildUI();
-        }
-
-        public void loadTrip(int id) {
-            this.tripId = id;
-            lblStatus.setText(" ");
-            loadDropdowns();
-
-            txtAdmin.setText(loggedInAdminName);
-
-            try {
-                PreparedStatement ps = conn.prepareStatement("SELECT * FROM Trip WHERE trip_id=?");
-                ps.setInt(1, id);
-                ResultSet rs = ps.executeQuery();
-                if (rs.next()) {
-                    int pId = rs.getInt("passenger_id");
-                    int aId = rs.getInt("assignment_id");
-                    currentAssignmentId = rs.wasNull() ? -1 : aId;
-
-                    for (int i = 0; i < passengerIds.length; i++)
-                        if (passengerIds[i] == pId) { cmbPassenger.setSelectedIndex(i); break; }
-
-                    if (currentAssignmentId != -1) {
-                        for (int i = 0; i < assignmentIds.length; i++) {
-                            if (assignmentIds[i] == currentAssignmentId) {
-                                cmbAssignment.setSelectedIndex(i); break;
-                            }
-                        }
-                    }
-
-                    txtStartDate.setText(rs.getDate("start_date") != null
-                            ? rs.getDate("start_date").toString() : "");
-                    txtStartTime.setText(rs.getTime("start_time") != null
-                            ? rs.getTime("start_time").toString() : "HH:MM");
-                    txtEndDate.setText(rs.getDate("end_date") != null
-                            ? rs.getDate("end_date").toString() : "");
-                    txtEndTime.setText(rs.getTime("end_time") != null
-                            ? rs.getTime("end_time").toString() : "HH:MM");
-                    txtPickup.setText(rs.getString("pick_up_location"));
-                    txtDestination.setText(rs.getString("destination"));
-                    txtPaxCount.setText(String.valueOf(rs.getInt("passenger_count")));
-                    cmbStatus.setSelectedItem(rs.getString("trip_status"));
-                }
-            } catch (Exception e) { e.printStackTrace(); }
-        }
-
-        private void loadDropdowns() {
-            try {
-                cmbPassenger.removeAllItems();
-                PreparedStatement psP = conn.prepareStatement(
-                    "SELECT p.passenger_id, u.first_name+' '+u.last_name AS name " +
-                    "FROM Passenger p JOIN Users u ON p.passenger_id=u.user_id " +
-                    "WHERE u.user_status='Active'");
-                ResultSet rsP = psP.executeQuery();
-                java.util.List<Integer> pIds = new java.util.ArrayList<>();
-                while (rsP.next()) {
-                    cmbPassenger.addItem(rsP.getString("name"));
-                    pIds.add(rsP.getInt("passenger_id"));
-                }
-                passengerIds = pIds.stream().mapToInt(i -> i).toArray();
-
-                cmbAssignment.removeAllItems();
-                PreparedStatement psA = conn.prepareStatement(
-                    "SELECT va.assignment_id, " +
-                    "du.first_name+' '+du.last_name+' - '+v.vehicle_model AS label, " +
-                    "v.passenger_capacity " +
-                    "FROM Vehicle_Assignment va " +
-                    "JOIN Driver d  ON va.driver_id  = d.driver_id " +
-                    "JOIN Users du  ON d.driver_id   = du.user_id " +
-                    "JOIN Vehicle v ON va.vehicle_id = v.vehicle_id");
-                ResultSet rsA = psA.executeQuery();
-                java.util.List<Integer> aIds = new java.util.ArrayList<>();
-                java.util.List<Integer> caps = new java.util.ArrayList<>();
-                while (rsA.next()) {
-                    // Show capacity in the label so admin can easily compare with pax count
-                    cmbAssignment.addItem(rsA.getString("label") +
-                        " (Cap: " + rsA.getInt("passenger_capacity") + ")");
-                    aIds.add(rsA.getInt("assignment_id"));
-                    caps.add(rsA.getInt("passenger_capacity"));
-                }
-                assignmentIds        = aIds.stream().mapToInt(i -> i).toArray();
-                assignmentCapacities = caps.stream().mapToInt(i -> i).toArray();
-            } catch (Exception e) { e.printStackTrace(); }
-        }
-
-        private void buildUI() {
-            JPanel card = new JPanel();
-            card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-            card.setBackground(WHITE);
-            card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(220, 220, 220), 1, true),
-                new EmptyBorder(30, 30, 30, 30)));
-
-            JLabel title = new JLabel("Update Trip", SwingConstants.CENTER);
-            title.setFont(TITLE_FONT);
-            title.setForeground(new Color(30, 30, 30));
-            title.setAlignmentX(Component.CENTER_ALIGNMENT);
-            card.add(title);
-            card.add(Box.createVerticalStrut(20));
-
-            cmbPassenger.setPreferredSize(new Dimension(260, 32));
-            cmbAssignment.setPreferredSize(new Dimension(260, 32));
-            cmbStatus.setPreferredSize(new Dimension(260, 32));
-
-            txtAdmin.setEditable(false);
-            txtAdmin.setBackground(new Color(240, 240, 240));
-            txtAdmin.setText(loggedInAdminName);
-
-            JPanel form = new JPanel(new GridBagLayout());
-            form.setBackground(WHITE);
-            GridBagConstraints gbc = new GridBagConstraints();
-            gbc.insets = new Insets(6, 10, 6, 10);
-            gbc.fill   = GridBagConstraints.HORIZONTAL;
-            gbc.anchor = GridBagConstraints.WEST;
-
-            int y = 0;
-            addFormRow(form, gbc, "Passenger:",   cmbPassenger,   y++);
-            addFormRow(form, gbc, "Admin:",        txtAdmin,      y++);
-            addFormRow(form, gbc, "Assignment:",  cmbAssignment,  y++);
-            addFormRow(form, gbc, "Start Date:",  txtStartDate,   y++);
-            addFormRow(form, gbc, "Start Time:",  txtStartTime,   y++);
-            addFormRow(form, gbc, "End Date:",    txtEndDate,     y++);
-            addFormRow(form, gbc, "End Time:",    txtEndTime,     y++);
-            addFormRow(form, gbc, "Pickup:",      txtPickup,      y++);
-            addFormRow(form, gbc, "Destination:", txtDestination, y++);
-            addFormRow(form, gbc, "Pax Count:",   txtPaxCount,    y++);
-            addFormRow(form, gbc, "Status:",      cmbStatus,      y++);
-            card.add(form);
-            card.add(Box.createVerticalStrut(20));
-
-            JButton btnUpdate = new JButton("Update");
-            JButton btnBack   = new JButton("Back");
-            styleButtonFilled(btnUpdate, BLUE);
-            styleButtonOutline(btnBack, BLUE);
-            btnUpdate.setPreferredSize(new Dimension(100, 35));
-            btnBack.setPreferredSize(new Dimension(100, 35));
-            JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
-            btnRow.setBackground(WHITE);
-            btnRow.add(btnUpdate); btnRow.add(btnBack);
-            card.add(btnRow);
-            card.add(Box.createVerticalStrut(10));
-
-            lblStatus.setFont(LABEL_FONT);
-            lblStatus.setAlignmentX(Component.CENTER_ALIGNMENT);
-            card.add(lblStatus);
-
-            JScrollPane scroll = new JScrollPane(card,
-                JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-            scroll.setBorder(null);
-            scroll.getViewport().setBackground(WHITE);
-            add(scroll, new GridBagConstraints());
-
-            btnUpdate.addActionListener(e -> update());
-            btnBack.addActionListener(e -> { cardLayout.show(container, "LIST"); loadTrips("All"); });
-        }
-
-        private java.sql.Time parseTime(String s) throws Exception {
-            if (s.matches("\\d{2}:\\d{2}")) s += ":00";
-            return java.sql.Time.valueOf(s);
-        }
-
-        private void update() {
-            if (tripId == -1) return;
-            if (loggedInAdminId <= 0) { showError("No logged-in admin detected!"); return; }
-            if (txtPickup.getText().trim().isEmpty())      { showError("Pickup is required!");      return; }
-            if (txtDestination.getText().trim().isEmpty()) { showError("Destination is required!"); return; }
-
-            java.sql.Date startDate, endDate;
-            try { startDate = java.sql.Date.valueOf(txtStartDate.getText().trim()); }
-            catch (Exception ex) { showError("Invalid start date!"); return; }
-            try { endDate = java.sql.Date.valueOf(txtEndDate.getText().trim()); }
-            catch (Exception ex) { showError("Invalid end date!"); return; }
-            if (!startDate.toLocalDate().isAfter(LocalDate.now().minusDays(1))) {
-                showError("Start date cannot be in the past!"); return;
-            }
-            if (endDate.before(startDate)) { showError("End date must be after start date!"); return; }
-
-            java.sql.Time startTime, endTime;
-            try { startTime = parseTime(txtStartTime.getText().trim()); }
-            catch (Exception ex) { showError("Invalid start time! Use HH:MM"); return; }
-            try { endTime = parseTime(txtEndTime.getText().trim()); }
-            catch (Exception ex) { showError("Invalid end time! Use HH:MM"); return; }
-
-            int paxCount;
-            try { paxCount = Integer.parseInt(txtPaxCount.getText().trim()); }
-            catch (Exception ex) { showError("Pax count must be a number!"); return; }
-            if (paxCount <= 0) { showError("Pax count must be > 0!"); return; }
-
-            int selIdx      = cmbAssignment.getSelectedIndex();
-            int selAssignId = (selIdx >= 0 && assignmentIds.length > 0) ? assignmentIds[selIdx] : -1;
-
-            if (selAssignId != -1) {
-                // VALIDATION: pax count must not exceed the selected vehicle's capacity
-                int vehicleCapacity = assignmentCapacities[selIdx];
-                if (paxCount > vehicleCapacity) {
-                    showError("Pax count (" + paxCount + ") exceeds vehicle capacity (" + vehicleCapacity + ")!");
-                    return;
-                }
-
-                java.util.List<Integer> avail = getAvailableAssignmentIds(startDate, endDate, tripId);
-                if (!avail.contains(selAssignId)) {
-                    showError("Assignment has an overlapping Pending/Approved/Completed trip!"); return;
-                }
-            }
-
-            try {
-                PreparedStatement ps = conn.prepareStatement(
-                    "UPDATE Trip SET passenger_id=?,admin_id=?,assignment_id=?," +
-                    "start_date=?,start_time=?,end_date=?,end_time=?," +
-                    "pick_up_location=?,destination=?,passenger_count=?," +
-                    "trip_status=? WHERE trip_id=?");
-                ps.setInt(1,    passengerIds[cmbPassenger.getSelectedIndex()]);
-                ps.setInt(2,    loggedInAdminId);
-                if (selAssignId != -1) ps.setInt(3, selAssignId);
-                else                   ps.setNull(3, java.sql.Types.INTEGER);
-                ps.setDate(4,   startDate);
-                ps.setTime(5,   startTime);
-                ps.setDate(6,   endDate);
-                ps.setTime(7,   endTime);
-                ps.setString(8, txtPickup.getText().trim());
-                ps.setString(9, txtDestination.getText().trim());
-                ps.setInt(10,   paxCount);
-                ps.setString(11, cmbStatus.getSelectedItem().toString());
-                ps.setInt(12,   tripId);
-                ps.executeUpdate();
-                lblStatus.setForeground(new Color(0, 150, 80));
-                lblStatus.setText("Trip updated successfully!");
-                loadTrips("All");
-            } catch (Exception e) {
-                showError("Error updating trip! " + e.getMessage());
-                e.printStackTrace();
-            }
-        }
-
-        private void showError(String m) { lblStatus.setForeground(RED); lblStatus.setText(m); }
-    }
-
-
-    private void addFormRow(JPanel panel, GridBagConstraints gbc, String label, Component field, int y) {
-        gbc.gridx = 0; gbc.gridy = y; gbc.gridwidth = 1; gbc.weightx = 0;
-        JLabel lbl = new JLabel(label); lbl.setFont(LABEL_FONT); panel.add(lbl, gbc);
-        gbc.gridx = 1; gbc.weightx = 1; panel.add(field, gbc);
-    }
-
-    private void addInfoRow(JPanel panel, GridBagConstraints gbc, String label, JLabel value, int y) {
-        gbc.gridx = 0; gbc.gridy = y; gbc.gridwidth = 1; gbc.weightx = 0;
-        JLabel lbl = new JLabel(label);
-        lbl.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        panel.add(lbl, gbc);
-        gbc.gridx = 1; gbc.weightx = 1; panel.add(value, gbc);
-    }
-
-    private JTextField styledField() {
-        JTextField f = new JTextField(15);
-        f.setPreferredSize(new Dimension(260, 32));
-        f.setMinimumSize(new Dimension(260, 32));
-        f.setFont(LABEL_FONT);
-        return f;
-    }
-
-    private JLabel valueLabel() {
-        JLabel l = new JLabel();
-        l.setFont(LABEL_FONT);
-        l.setForeground(new Color(50, 50, 50));
-        return l;
-    }
-
-    private void styleButtonFilled(JButton btn, Color bg) {
-        btn.setBackground(bg); btn.setForeground(WHITE);
-        btn.setFocusPainted(false); btn.setBorderPainted(false);
-        btn.setOpaque(true); btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 13));
-    }
-
-    private void styleButtonOutline(JButton btn, Color c) {
-        btn.setBackground(WHITE); btn.setForeground(c);
-        btn.setFocusPainted(false); btn.setBorder(BorderFactory.createLineBorder(c, 2));
-        btn.setOpaque(true); btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 13));
-    }
+    private Label vl(){Label l=new Label();l.getStyleClass().add("form-label");return l;}
 }
