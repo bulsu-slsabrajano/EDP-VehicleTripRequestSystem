@@ -125,7 +125,9 @@
     -fx-border-radius: 4px;
     -fx-background-radius: 4px;
 }
-.btn-outline-danger:hover { -fx-background-color: rgba(220,53,69,0.08); }
+.btn-outline-danger:hover { 
+	-fx-background-color: rgba(220,53,69,0.08); 
+}
 
 .btn-add-contact {
     -fx-background-color: transparent;
@@ -170,6 +172,7 @@
     -fx-padding: 10px 22px;
 }
 .topnav-btn:hover { -fx-text-fill: white; }
+
 .topnav-btn-active {
     -fx-text-fill: white;
     -fx-border-color: transparent transparent white transparent;
@@ -312,7 +315,11 @@
 
 /* ── TabPane (passenger trips, driver trips) ────────────────── */
 .custom-tab-pane .tab-header-area { -fx-padding: 0; }
-.custom-tab-pane .tab-header-background { -fx-background-color: linear-gradient(to bottom, #0096C7, #0F2573); }
+
+.custom-tab-pane .tab-header-background { 
+	-fx-background-color: #D1D9E6; 
+}
+
 .custom-tab-pane .tab {
     -fx-background-color: transparent;
     -fx-border-width: 0;
@@ -321,12 +328,20 @@
 .custom-tab-pane .tab .tab-label {
     -fx-font-weight: bold;
     -fx-font-size: 14px;
-    -fx-text-fill: rgba(255,255,255,0.70);
+	-fx-text-fill: #0F2573;
+    /*-fx-text-fill: rgba(255,255,255,0.70);*/
 }
-.custom-tab-pane .tab:selected .tab-label { -fx-text-fill: white; }
+.custom-tab-pane .tab:selected .tab-label { 
+	-fx-text-fill: #0F2573; 
+}
+
 .custom-tab-pane .tab:selected {
-    -fx-border-color: transparent transparent white transparent;
-    -fx-border-width: 0 0 3px 0;
+	-fx-border-color: transparent transparent #0F2573 transparent;
+	    -fx-border-width: 0 0 3px 0;
+}
+
+.custom-tab-pane .tab-content-area {
+    -fx-background-color: #D1D9E6;
 }
 
 /* ── Login page ──────────────────────────────────────────────── */
@@ -365,7 +380,8 @@
     -fx-background-color: transparent;
     -fx-border-width: 0;
     -fx-cursor: hand;
-    -fx-text-fill: #0F2573;
+    /*-fx-text-fill: #0F2573;*/
+	-fx-text-fill: #FFFFFF;
     -fx-padding: 0 30px 0 0;
 }
 
@@ -472,3 +488,27 @@
     -fx-font-size: 18px;
     -fx-text-fill: #FF8C00;
 }
+
+
+.btn-outline-danger {
+	-fx-background-color: transparent;
+	-fx-text-fill: #DC3545;
+	-fx-border-color: #DC3545;
+}
+
+/* Header font */
+.header-font{
+	-fx-font-weight:bold;
+	-fx-font-size:24px;
+	-fx-padding:0 0 0 6px;
+	-fx-text-fill:white;
+}
+
+/* welcome style */
+.welcome-style{
+	"-fx-font-weight:bold;
+	-fx-font-size:26px;
+	-fx-text-fill:#1A2B6D;"
+}
+
+

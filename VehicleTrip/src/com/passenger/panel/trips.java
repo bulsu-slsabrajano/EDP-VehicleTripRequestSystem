@@ -42,28 +42,7 @@ public class trips extends VBox {
 
     private void buildUI() {
         // ── Gradient tab header ───────────────────────────────────────────────
-        HBox tabHeader = new HBox();
-        tabHeader.getStyleClass().add("gradient-panel");
-        tabHeader.setPrefHeight(76);
-        tabHeader.setPadding(new Insets(0, 25, 0, 25));
-        tabHeader.setAlignment(Pos.CENTER_LEFT);
-        tabHeader.setSpacing(50);
-
-        String[] tabLabels = {"PENDING", "APPROVED", "COMPLETED", "CANCELLED"};
-        Button[] tabBtns   = new Button[4];
-        for (int i = 0; i < 4; i++) {
-            final int idx = i;
-            Button btn = new Button(tabLabels[i]);
-            btn.getStyleClass().add("topnav-btn");
-            btn.setOnAction(e -> {
-                tabPane.getSelectionModel().select(idx);
-                for (Button b : tabBtns) b.getStyleClass().remove("topnav-btn-active");
-                btn.getStyleClass().add("topnav-btn-active");
-            });
-            tabBtns[i] = btn;
-            tabHeader.getChildren().add(btn);
-        }
-        tabBtns[0].getStyleClass().add("topnav-btn-active");
+        
 
         // ── Pending tab ───────────────────────────────────────────────────────
         pendingT = buildTripTable(pendingData);
@@ -127,14 +106,9 @@ public class trips extends VBox {
         VBox.setVgrow(tabPane, Priority.ALWAYS);
 
         // Sync custom header buttons with TabPane selection
-        tabPane.getSelectionModel().selectedIndexProperty().addListener((obs, old, idx) -> {
-            for (int i = 0; i < 4; i++) {
-                tabBtns[i].getStyleClass().remove("topnav-btn-active");
-                if (i == idx.intValue()) tabBtns[i].getStyleClass().add("topnav-btn-active");
-            }
-        });
+        
 
-        getChildren().addAll(tabHeader, tabPane);
+        getChildren().addAll(tabPane);
         VBox.setVgrow(tabPane, Priority.ALWAYS);
 
         loadAll();
@@ -175,7 +149,9 @@ public class trips extends VBox {
     }
 
     private void loadTrips(ObservableList<Object[]> model, String status) {
-        try {
+    	 model.clear();
+    	
+    	try {
             PreparedStatement ps = conn.prepareStatement(
                 "SELECT * FROM Trip WHERE trip_status=? AND passenger_id=?");
             ps.setString(1, status); ps.setInt(2, passengerId);

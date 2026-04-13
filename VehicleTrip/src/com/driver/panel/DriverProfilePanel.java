@@ -92,8 +92,13 @@ public class DriverProfilePanel extends VBox {
 
         card.getChildren().addAll(title, FxUtil.spacer(20), form, btnRow, FxUtil.spacer(10), lblStatus);
 
-        ScrollPane scroll = new ScrollPane(card);
+        //dito
+        VBox wrapper = new VBox(card);
+        wrapper.setAlignment(Pos.CENTER);
+
+        ScrollPane scroll = new ScrollPane(wrapper);
         scroll.setFitToWidth(true);
+        scroll.setFitToHeight(true);
         scroll.getStyleClass().add("edge-to-edge");
         scroll.setPrefSize(640, 620);
         VBox.setVgrow(scroll, Priority.ALWAYS);
@@ -111,7 +116,6 @@ public class DriverProfilePanel extends VBox {
         Button btnRemove = new Button("X");
         btnRemove.getStyleClass().addAll("btn", "btn-outline-danger");
         btnRemove.setPrefSize(38, 32);
-        btnRemove.setMinSize(38, 32);
 
         HBox row = new HBox(6, field, btnRemove);
         row.setAlignment(Pos.CENTER_LEFT);

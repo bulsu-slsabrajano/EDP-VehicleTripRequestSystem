@@ -29,18 +29,34 @@ public class FxUtil {
     public static void showInfo(Node owner, String msg) {
         Alert a = new Alert(Alert.AlertType.INFORMATION, msg, ButtonType.OK);
         a.setHeaderText(null);
+        
+        if (owner != null && owner.getScene() != null) {
+            a.initOwner(owner.getScene().getWindow()); // ✅ CENTER FIX
+        }
+        
         a.showAndWait();
     }
 
     public static void showError(Node owner, String msg) {
         Alert a = new Alert(Alert.AlertType.ERROR, msg, ButtonType.OK);
         a.setHeaderText(null);
+        
+        if (owner != null && owner.getScene() != null) {
+            a.initOwner(owner.getScene().getWindow()); // ✅ CENTER FIX
+        }
+
+        
         a.showAndWait();
     }
 
     public static void showWarning(Node owner, String msg) {
         Alert a = new Alert(Alert.AlertType.WARNING, msg, ButtonType.OK);
         a.setHeaderText(null);
+        
+        if (owner != null && owner.getScene() != null) {
+            a.initOwner(owner.getScene().getWindow()); // ✅ CENTER FIX
+        }
+        
         a.showAndWait();
     }
 
@@ -49,6 +65,11 @@ public class FxUtil {
         Alert a = new Alert(Alert.AlertType.CONFIRMATION, msg, ButtonType.YES, ButtonType.NO);
         a.setTitle(title);
         a.setHeaderText(null);
+        
+        if (owner != null && owner.getScene() != null) {
+            a.initOwner(owner.getScene().getWindow()); // ✅ CENTER FIX
+        }
+        
         Optional<ButtonType> r = a.showAndWait();
         return r.isPresent() && r.get() == ButtonType.YES;
     }

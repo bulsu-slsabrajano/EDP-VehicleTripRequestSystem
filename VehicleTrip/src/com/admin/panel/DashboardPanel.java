@@ -59,7 +59,10 @@ public class DashboardPanel extends VBox {
 
         Button btnRefresh = FxUtil.btnPrimary("Refresh");
         btnRefresh.setOnAction(e -> loadDashboard());
-        topBar.getChildren().addAll(lblWelcome, btnRefresh);
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        
+        topBar.getChildren().addAll(lblWelcome, spacer, btnRefresh);
 
         // ── Summary cards ────────────────────────────────────────────────────
         lblUsers      = new Label("0");

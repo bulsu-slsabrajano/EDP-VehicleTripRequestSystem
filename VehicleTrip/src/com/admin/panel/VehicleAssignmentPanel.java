@@ -137,6 +137,8 @@ public class VehicleAssignmentPanel extends BorderPane {
         private int adminId_ = -1;
 
         AssignPanel() {
+        	lblStatus.setMaxWidth(Double.MAX_VALUE);
+        	lblStatus.setAlignment(Pos.CENTER);
             setBackground(Background.fill(Color.WHITE)); setAlignment(Pos.CENTER);
             cmbDriver.getStyleClass().add("combo-field"); cmbDriver.setPrefWidth(260);
             cmbVehicle.getStyleClass().add("combo-field"); cmbVehicle.setPrefWidth(260);
@@ -225,6 +227,8 @@ public class VehicleAssignmentPanel extends BorderPane {
         private int adminId_ = -1;
 
         UpdateAssignPanel(){
+        	lblStatus.setMaxWidth(Double.MAX_VALUE);
+        	lblStatus.setAlignment(Pos.CENTER);
             setBackground(Background.fill(Color.WHITE)); setAlignment(Pos.CENTER);
             cmbDriver.getStyleClass().add("combo-field"); cmbDriver.setPrefWidth(260);
             cmbVehicle.getStyleClass().add("combo-field"); cmbVehicle.setPrefWidth(260);
@@ -305,6 +309,8 @@ public class VehicleAssignmentPanel extends BorderPane {
         private Label lblAid=vl(),lblDrv=vl(),lblVeh=vl(),lblAdm=vl(),lblDt=vl(),lblSt=vl();
         private Label lblMsg=FxUtil.statusLabel();
         CancelAssignPanel(){
+        	lblMsg.setMaxWidth(Double.MAX_VALUE);
+        	lblMsg.setAlignment(Pos.CENTER);
             setBackground(Background.fill(Color.WHITE)); setAlignment(Pos.CENTER);
             VBox card=new VBox(0); card.getStyleClass().add("card"); card.setMaxWidth(520);
             Label title=new Label("Cancel Assignment");

@@ -49,11 +49,14 @@ public class reservation extends VBox {
     private void buildUI() {
         // ── Gradient header ────────────────────────────────────────────────
         HBox header = new HBox();
-        header.getStyleClass().add("gradient-panel");
+        //header.getStyleClass().add("gradient-panel");
+        header.setAlignment(Pos.CENTER);
         header.setPadding(new Insets(20, 25, 20, 25));
         header.setPrefHeight(76);
+        
         Label hTitle = new Label("Book a Trip");
-        hTitle.setStyle("-fx-font-weight:bold;-fx-font-size:26px;-fx-text-fill:white;");
+        hTitle.getStyleClass().add("welcome-title");
+        hTitle.setStyle("-fx-font-weight:bold;-fx-font-size:26px;-fx-text-fill:#1A2B6D;");
         header.getChildren().add(hTitle);
 
         // ── Form card ─────────────────────────────────────────────────────
@@ -125,8 +128,12 @@ public class reservation extends VBox {
 
         card.getChildren().addAll(title, FxUtil.spacer(20), form, btnRow, FxUtil.spacer(10));
 
-        ScrollPane scroll = new ScrollPane(card);
-        scroll.setFitToWidth(false);
+        VBox wrapper = new VBox(card);
+        wrapper.setAlignment(Pos.CENTER);
+        
+        ScrollPane scroll = new ScrollPane(wrapper);
+        scroll.setFitToWidth(true);
+        scroll.setFitToHeight(true);
         scroll.getStyleClass().add("edge-to-edge");
         scroll.setPrefSize(640, 600);
         scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
@@ -136,7 +143,7 @@ public class reservation extends VBox {
         VBox.setVgrow(scroll, Priority.ALWAYS);
 
         getChildren().addAll(header, scroll);
-        VBox.setVgrow(scroll, Priority.ALWAYS);
+        //VBox.setVgrow(scroll, Priority.ALWAYS);
 
         btnSubmit.setOnAction(e -> submitBooking());
         btnCancel.setOnAction(e -> {
@@ -179,10 +186,13 @@ public class reservation extends VBox {
 
     private void submitBooking() {
         if (txtPickup.getText().trim().isEmpty() || txtDestination.getText().trim().isEmpty()) {
-            FxUtil.showError(this, "Pickup and Destination are required."); return;
+            FxUtil.showError(this, "Pickup and Destination are required."); 
+            return;
         }
         LocalDate sd = dpStartDate.getValue(), ed = dpEndDate.getValue();
-        if (sd == null || ed == null) { FxUtil.showError(this, "Please select valid dates."); return; }
+        if (sd == null || ed == null) { FxUtil.showError(this, "Please select valid dates."); 
+        	return; 
+        }
 
         java.sql.Date startDate = java.sql.Date.valueOf(sd);
         java.sql.Date endDate   = java.sql.Date.valueOf(ed);

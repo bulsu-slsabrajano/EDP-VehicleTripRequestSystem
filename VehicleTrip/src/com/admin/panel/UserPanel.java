@@ -172,25 +172,57 @@ public class UserPanel extends BorderPane {
             title.setStyle(title.getStyle()+"-fx-text-fill:#0096C7;");
             title.setMaxWidth(Double.MAX_VALUE); title.setAlignment(Pos.CENTER);
             GridPane grid=FxUtil.formGrid(); int y=0;
-            FxUtil.addInfoRow(grid,"User ID:",       lbId, y++); FxUtil.addInfoRow(grid,"First Name:",  lbFn, y++);
-            FxUtil.addInfoRow(grid,"Middle Name:",   lbMn, y++); FxUtil.addInfoRow(grid,"Last Name:",   lbLn, y++);
-            FxUtil.addInfoRow(grid,"Username:",      lbUn, y++); FxUtil.addInfoRow(grid,"Email:",       lbEm, y++);
-            FxUtil.addInfoRow(grid,"Address:",       lbAd, y++); FxUtil.addInfoRow(grid,"Role:",        lbRl, y++);
+            grid.setAlignment(Pos.CENTER);
+            FxUtil.addInfoRow(grid,"User ID:",       lbId, y++); 
+            FxUtil.addInfoRow(grid,"First Name:",  lbFn, y++);
+            FxUtil.addInfoRow(grid,"Middle Name:",   lbMn, y++); 
+            FxUtil.addInfoRow(grid,"Last Name:",   lbLn, y++);
+            FxUtil.addInfoRow(grid,"Username:",      lbUn, y++); 
+            FxUtil.addInfoRow(grid,"Email:",       lbEm, y++);
+            FxUtil.addInfoRow(grid,"Address:",       lbAd, y++); 
+            FxUtil.addInfoRow(grid,"Role:",        lbRl, y++);
             FxUtil.addInfoRow(grid,"Account Status:",lbSt, y++);
+           
             lblLicKey.getStyleClass().add("form-label"); lblDsKey.getStyleClass().add("form-label");
-            lblLicKey.setVisible(false); lbLic.setVisible(false); lblDsKey.setVisible(false); lbDs.setVisible(false);
-            grid.add(lblLicKey,0,y); grid.add(lbLic,1,y); y++;
-            grid.add(lblDsKey,0,y);  grid.add(lbDs,1,y);  y++;
-            GridPane.setMargin(lblLicKey,new Insets(6,10,6,10)); GridPane.setMargin(lbLic,new Insets(6,10,6,10));
-            GridPane.setMargin(lblDsKey,new Insets(6,10,6,10));  GridPane.setMargin(lbDs,new Insets(6,10,6,10));
+            lblLicKey.setVisible(false); lbLic.setVisible(false); lblDsKey.setVisible(false); 
+            lbDs.setVisible(false);
+            
+            grid.add(lblLicKey,0,y); 
+            grid.add(lbLic,1,y); y++;
+            grid.add(lblDsKey,0,y);  
+            grid.add(lbDs,1,y);  y++;
+           
+            GridPane.setMargin(lblLicKey,new Insets(6,10,6,10)); 
+            GridPane.setMargin(lbLic,new Insets(6,10,6,10));
+            GridPane.setMargin(lblDsKey,new Insets(6,10,6,10));  
+            GridPane.setMargin(lbDs,new Insets(6,10,6,10));
+          
             Label ctitle=FxUtil.sectionLabel("Contact Numbers:");
-            GridPane.setColumnSpan(ctitle,2); grid.add(ctitle,0,y++);
-            GridPane.setColumnSpan(contactsBox,2); grid.add(contactsBox,0,y); GridPane.setMargin(contactsBox,new Insets(4,10,6,10));
+           
+            GridPane.setColumnSpan(ctitle,2); 
+            grid.add(ctitle,0,y++);
+            GridPane.setColumnSpan(contactsBox,2); 
+            grid.add(contactsBox,0,y); 
+            GridPane.setMargin(contactsBox,new Insets(4,10,6,10));
+
+          
+            
             Button btnBack=FxUtil.btnOutlinePrimary("Back");
+            
             btnBack.setOnAction(e->{cards.show("LIST");loadUsers("All","All");});
-            HBox btnRow=new HBox(btnBack); btnRow.setAlignment(Pos.CENTER); btnRow.setPadding(new Insets(20,0,0,0));
+            
+            HBox btnRow=new HBox(btnBack); btnRow.setAlignment(Pos.CENTER); 
+            btnRow.setPadding(new Insets(20,0,0,0));
             card.getChildren().addAll(title,FxUtil.spacer(20),grid,btnRow);
-            ScrollPane sp=new ScrollPane(card); sp.setFitToWidth(true); sp.getStyleClass().add("edge-to-edge");
+            
+            VBox wrapper = new VBox(card);
+            wrapper.setAlignment(Pos.CENTER);
+
+            ScrollPane sp = new ScrollPane(wrapper);
+            sp.setFitToWidth(true);
+            sp.setFitToHeight(true);
+            sp.getStyleClass().add("edge-to-edge");
+
             getChildren().add(sp);
         }
         void load(int userId, String role){
@@ -239,6 +271,8 @@ public class UserPanel extends BorderPane {
         private Label lblLicLbl=FxUtil.formLabel("License No:"), lblStatus=FxUtil.statusLabel();
 
         AddUserPanel(){
+        	lblStatus.setMaxWidth(Double.MAX_VALUE);
+        	lblStatus.setAlignment(Pos.CENTER);
             setBackground(Background.fill(Color.WHITE)); setAlignment(Pos.CENTER);
             role.setValue("Admin"); lic.setVisible(false); lblLicLbl.setVisible(false);
             role.setOnAction(e->{boolean d="Driver".equals(role.getValue());lic.setVisible(d);lblLicLbl.setVisible(d);});
@@ -256,7 +290,15 @@ public class UserPanel extends BorderPane {
             btnAdd.setOnAction(e->save()); btnBack.setOnAction(e->{clear();cards.show("LIST");loadUsers("All","All");});
             HBox btnRow=new HBox(15,btnAdd,btnBack); btnRow.setAlignment(Pos.CENTER); btnRow.setPadding(new Insets(20,0,0,0));
             card.getChildren().addAll(title,FxUtil.spacer(20),form,btnRow,FxUtil.spacer(10),lblStatus);
-            ScrollPane sp=new ScrollPane(card); sp.setFitToWidth(true); sp.getStyleClass().add("edge-to-edge");
+            
+            VBox wrapper = new VBox(card);
+            wrapper.setAlignment(Pos.CENTER);
+
+            ScrollPane sp = new ScrollPane(wrapper);
+            sp.setFitToWidth(true);
+            sp.setFitToHeight(true);
+            sp.getStyleClass().add("edge-to-edge");
+
             getChildren().add(sp);
         }
         private void save(){
@@ -324,12 +366,15 @@ public class UserPanel extends BorderPane {
         private Label lblMsg=FxUtil.statusLabel();
 
         DeleteUserPanel(){
+        	lblMsg.setMaxWidth(Double.MAX_VALUE);
+        	lblMsg.setAlignment(Pos.CENTER);
             setBackground(Background.fill(Color.WHITE)); setAlignment(Pos.CENTER);
             VBox card=new VBox(0); card.getStyleClass().add("card"); card.setMaxWidth(580);
             Label title=new Label("Deactivate User");
             title.setStyle("-fx-font-weight:bold;-fx-font-size:20px;-fx-text-fill:#DC3545;");
             title.setMaxWidth(Double.MAX_VALUE); title.setAlignment(Pos.CENTER);
             GridPane grid=FxUtil.formGrid(); int y=0;
+            grid.setAlignment(Pos.CENTER);
             FxUtil.addInfoRow(grid,"User ID:",lId,y++);FxUtil.addInfoRow(grid,"First Name:",lFn,y++);
             FxUtil.addInfoRow(grid,"Middle Name:",lMn,y++);FxUtil.addInfoRow(grid,"Last Name:",lLn,y++);
             FxUtil.addInfoRow(grid,"Username:",lUn,y++);FxUtil.addInfoRow(grid,"Email:",lEm,y++);
@@ -376,6 +421,8 @@ public class UserPanel extends BorderPane {
         private Label lblLicLbl=FxUtil.formLabel("License No:"), lblStatus=FxUtil.statusLabel();
 
         UpdateUserPanel(){
+        	lblStatus.setMaxWidth(Double.MAX_VALUE);
+        	lblStatus.setAlignment(Pos.CENTER);
             setBackground(Background.fill(Color.WHITE)); setAlignment(Pos.CENTER);
             role.setValue("Admin"); status.setValue("Active"); lic.setVisible(false); lblLicLbl.setVisible(false);
             role.setOnAction(e->{boolean d="Driver".equals(role.getValue());lic.setVisible(d);lblLicLbl.setVisible(d);});
@@ -395,7 +442,15 @@ public class UserPanel extends BorderPane {
             btnUpd.setOnAction(e->update()); btnBack.setOnAction(e->{lblStatus.setText(" ");cards.show("LIST");loadUsers("All","All");});
             HBox btnRow=new HBox(15,btnUpd,btnBack); btnRow.setAlignment(Pos.CENTER); btnRow.setPadding(new Insets(20,0,0,0));
             card.getChildren().addAll(title,FxUtil.spacer(20),form,btnRow,FxUtil.spacer(10),lblStatus);
-            ScrollPane sp=new ScrollPane(card); sp.setFitToWidth(true); sp.getStyleClass().add("edge-to-edge");
+            
+            VBox wrapper = new VBox(card);
+            wrapper.setAlignment(Pos.CENTER);
+
+            ScrollPane sp = new ScrollPane(wrapper);
+            sp.setFitToWidth(true);
+            sp.setFitToHeight(true);
+            sp.getStyleClass().add("edge-to-edge");
+
             getChildren().add(sp);
         }
         void setData(int id,String first,String mid,String last,String user,String email,String addr2,String pwd,String r,String st){
@@ -497,5 +552,9 @@ public class UserPanel extends BorderPane {
         private String nvl(String s){return s!=null?s:"";}
     }
 
-    private Label vl(){Label l=new Label();l.getStyleClass().add("form-label");return l;}
+    private Label vl(){
+    	Label l=new Label();
+    	l.getStyleClass().add("form-label");
+    	return l;
+    	}
 }

@@ -195,18 +195,34 @@ public class TripPanel extends BorderPane {
         private Label lId=vl(),lPax=vl(),lAdm=vl(),lAss=vl(),lSd=vl(),lSt=vl(),lEd=vl(),lEt=vl();
         private Label lPk=vl(),lDst=vl(),lPc=vl(),lStatus=vl();
         ViewTripPanel(){
-            setBackground(Background.fill(Color.WHITE)); setAlignment(Pos.CENTER);
-            VBox card=new VBox(0); card.getStyleClass().add("card"); card.setMaxWidth(560);
+        	
+        	lStatus.setMaxWidth(Double.MAX_VALUE);
+        	lStatus.setAlignment(Pos.CENTER);
+            setBackground(Background.fill(Color.WHITE)); 
+            setAlignment(Pos.CENTER);
+           
+            VBox card=new VBox(0); card.getStyleClass().add("card"); 
+            card.setMaxWidth(560);
+           
             Label title=new Label("Trip Details"); title.getStyleClass().add("title-medium");
             title.setStyle(title.getStyle()+"-fx-text-fill:#0096C7;");
-            title.setMaxWidth(Double.MAX_VALUE); title.setAlignment(Pos.CENTER);
+            title.setMaxWidth(Double.MAX_VALUE); 
+            title.setAlignment(Pos.CENTER);
+           
             GridPane grid=FxUtil.formGrid(); int y=0;
-            FxUtil.addInfoRow(grid,"Trip ID:",     lId,    y++); FxUtil.addInfoRow(grid,"Passenger:", lPax,y++);
-            FxUtil.addInfoRow(grid,"Admin:",       lAdm,   y++); FxUtil.addInfoRow(grid,"Assignment:",lAss,y++);
-            FxUtil.addInfoRow(grid,"Start Date:",  lSd,    y++); FxUtil.addInfoRow(grid,"Start Time:",lSt,y++);
-            FxUtil.addInfoRow(grid,"End Date:",    lEd,    y++); FxUtil.addInfoRow(grid,"End Time:",  lEt,y++);
-            FxUtil.addInfoRow(grid,"Pickup:",      lPk,    y++); FxUtil.addInfoRow(grid,"Destination:",lDst,y++);
-            FxUtil.addInfoRow(grid,"Pax Count:",   lPc,    y++); FxUtil.addInfoRow(grid,"Status:",   lStatus,y);
+            FxUtil.addInfoRow(grid,"Trip ID:",     lId,    y++); 
+            FxUtil.addInfoRow(grid,"Passenger:", lPax,y++);
+            FxUtil.addInfoRow(grid,"Admin:",       lAdm,   y++); 
+            FxUtil.addInfoRow(grid,"Assignment:",lAss,y++);
+            FxUtil.addInfoRow(grid,"Start Date:",  lSd,    y++); 
+            FxUtil.addInfoRow(grid,"Start Time:",lSt,y++);
+            FxUtil.addInfoRow(grid,"End Date:",    lEd,    y++);
+            FxUtil.addInfoRow(grid,"End Time:",  lEt,y++);
+            FxUtil.addInfoRow(grid,"Pickup:",      lPk,    y++); 
+            FxUtil.addInfoRow(grid,"Destination:",lDst,y++);
+            FxUtil.addInfoRow(grid,"Pax Count:",   lPc,    y++); 
+            FxUtil.addInfoRow(grid,"Status:",   lStatus,y);
+           
             Button btnBack=FxUtil.btnOutlinePrimary("Back");
             btnBack.setOnAction(e->{cards.show("LIST");loadTrips("All");});
             HBox btnRow=new HBox(btnBack); btnRow.setAlignment(Pos.CENTER); btnRow.setPadding(new Insets(20,0,0,0));
@@ -259,6 +275,8 @@ public class TripPanel extends BorderPane {
         private int[] passengerIds=new int[0], assignmentIds=new int[0], assignCaps=new int[0];
 
         CreateTripPanel(){
+        	lblStatus.setMaxWidth(Double.MAX_VALUE);
+        	lblStatus.setAlignment(Pos.CENTER);
             setBackground(Background.fill(Color.WHITE)); setAlignment(Pos.CENTER);
             cmbStatus.setValue("Pending");
             cmbPass.getStyleClass().add("combo-field"); cmbPass.setPrefWidth(260);
@@ -281,7 +299,14 @@ public class TripPanel extends BorderPane {
             btnSave.setOnAction(e->save()); btnBack.setOnAction(e->{cards.show("LIST");loadTrips("All");});
             HBox btnRow=new HBox(15,btnSave,btnBack); btnRow.setAlignment(Pos.CENTER); btnRow.setPadding(new Insets(15,0,0,0));
             card.getChildren().addAll(title,FxUtil.spacer(20),form,FxUtil.spacer(6),hint,FxUtil.spacer(8),btnCheck,FxUtil.spacer(14),btnRow,FxUtil.spacer(10),lblStatus);
-            ScrollPane sp=new ScrollPane(card); sp.setFitToWidth(true); sp.getStyleClass().add("edge-to-edge");
+            VBox wrapper = new VBox(card);
+            wrapper.setAlignment(Pos.CENTER);
+
+            ScrollPane sp = new ScrollPane(wrapper);
+            sp.setFitToWidth(true);
+            sp.setFitToHeight(true);
+            sp.getStyleClass().add("edge-to-edge");
+
             getChildren().add(sp);
         }
         public void setAdminId(int id){}
@@ -326,7 +351,9 @@ public class TripPanel extends BorderPane {
                 FxUtil.setSuccess(lblStatus,aIds.size()+" assignment(s) available.");
             }catch(Exception ex){ex.printStackTrace();}
         }
-        private java.sql.Time parseTime(String s) throws Exception{if(s.matches("\\d{2}:\\d{2}"))s+=":00";return java.sql.Time.valueOf(s);}
+        private java.sql.Time parseTime(String s) throws Exception{if(s.matches("\\d{2}:\\d{2}"))s+=":00";
+        return java.sql.Time.valueOf(s);}
+        
         private void save(){
             if(loggedInAdminId<=0){FxUtil.setError(lblStatus,"No logged-in admin!");return;}
             if(passengerIds.length==0){FxUtil.setError(lblStatus,"No passengers available!");return;}
@@ -373,6 +400,8 @@ public class TripPanel extends BorderPane {
         private int curAssignId = -1;
         
         UpdateTripPanel(){
+        	lblStatus.setMaxWidth(Double.MAX_VALUE);
+        	lblStatus.setAlignment(Pos.CENTER);
             setBackground(Background.fill(Color.WHITE)); setAlignment(Pos.CENTER);
             cmbPass.getStyleClass().add("combo-field"); cmbPass.setPrefWidth(260);
             cmbAss.getStyleClass().add("combo-field"); cmbAss.setPrefWidth(260);
@@ -390,7 +419,14 @@ public class TripPanel extends BorderPane {
             btnUpd.setOnAction(e->update()); btnBack.setOnAction(e->{cards.show("LIST");loadTrips("All");});
             HBox btnRow=new HBox(15,btnUpd,btnBack); btnRow.setAlignment(Pos.CENTER); btnRow.setPadding(new Insets(20,0,0,0));
             card.getChildren().addAll(title,FxUtil.spacer(20),form,btnRow,FxUtil.spacer(10),lblStatus);
-            ScrollPane sp=new ScrollPane(card); sp.setFitToWidth(true); sp.getStyleClass().add("edge-to-edge");
+            VBox wrapper = new VBox(card);
+            wrapper.setAlignment(Pos.CENTER);
+
+            ScrollPane sp = new ScrollPane(wrapper);
+            sp.setFitToWidth(true);
+            sp.setFitToHeight(true);
+            sp.getStyleClass().add("edge-to-edge");
+
             getChildren().add(sp);
         }
         void load(int id){

@@ -126,7 +126,7 @@ public class AdminUiPanel extends BorderPane {
 
         HBox header = new HBox();
         header.getStyleClass().add("content-header");
-        header.setAlignment(Pos.CENTER_LEFT);
+        header.setAlignment(Pos.CENTER_RIGHT);
 
         Label titleLbl = new Label(title);
         titleLbl.getStyleClass().add("page-header-title");
@@ -140,7 +140,10 @@ public class AdminUiPanel extends BorderPane {
             contentPane.show("Profile");
         });
 
-        header.getChildren().addAll(titleLbl, profileIcon);
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        header.getChildren().addAll(titleLbl, spacer, profileIcon);
         body.setBackground(Background.fill(Color.WHITE));
         bp.setTop(header);
         bp.setCenter(body);

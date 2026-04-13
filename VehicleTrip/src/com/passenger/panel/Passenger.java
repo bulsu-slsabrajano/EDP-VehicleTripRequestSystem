@@ -25,6 +25,10 @@ public class Passenger extends BorderPane {
     private trips  tripsPanel;
     private profile profilePanel;
 
+    // ── Active nav tracking (same as DriverUI) ─────────────────────────────
+   // private final Button[] navButtons = new Button[3];
+    private Button[] navButtons;
+
     public Passenger(String username, CardPane mainPane) {
         this.username = username;
         this.mainPane = mainPane;
@@ -35,63 +39,88 @@ public class Passenger extends BorderPane {
     }
 
     private void createNavbar() {
-        HBox nav = new HBox();
-        nav.setBackground(Background.fill(Color.web("#141E32")));
-        nav.setAlignment(Pos.CENTER_LEFT);
-        nav.setPadding(new Insets(0, 20, 0, 0));
-        nav.setPrefHeight(60);
 
-        // Logo
-        ImageView logo;
+        // ── Header bar (logo + title + profile icon + logout) ──────────────
+        HBox header = new HBox();
+        header.setBackground(Background.fill(Color.web("#141E32")));
+        header.setAlignment(Pos.CENTER_LEFT);
+        header.setPadding(new Insets(5, 10, 5, 15));
+
+        ImageView logoImg;
         try {
             Image img = new Image(getClass().getResourceAsStream(
-                "/com/project/resources/companyLogo.png"), 80, 60, true, true);
-            logo = new ImageView(img);
-        } catch (Exception e) { logo = new ImageView(); }
-        logo.setFitWidth(80); logo.setFitHeight(60);
+                    "/com/project/resources/companyLogo.png"), 80, 60, true, true);
+            logoImg = new ImageView(img);
+        } catch (Exception e) { logoImg = new ImageView(); }
+        logoImg.setFitWidth(80);
+        logoImg.setFitHeight(60);
 
-        HBox logoBox = new HBox(logo);
-        logoBox.setAlignment(Pos.CENTER);
-        logoBox.setPadding(new Insets(0, 10, 0, 0));
+        Label titleLbl = new Label("EduTrip");
+        titleLbl.getStyleClass().addAll("header-font");
 
-        String btnStyle =
-            "-fx-text-fill:white;-fx-background-color:transparent;" +
-            "-fx-font-weight:bold;-fx-font-size:16px;" +
-            "-fx-pref-width:150px;-fx-pref-height:60px;" +
-            "-fx-cursor:hand;-fx-border-width:0;";
+        HBox brand = new HBox(6, logoImg, titleLbl);
+        brand.setAlignment(Pos.CENTER_LEFT);
 
-        Button dashboard   = navButton("Dashboard",   btnStyle);
-        Button reservation = navButton("Reservation", btnStyle);
-        Button trips       = navButton("Trips",       btnStyle);
-        Button profile     = navButton("Profile",     btnStyle);
-        Button logout      = navButton("Logout",      btnStyle);
-
-        dashboard.setOnAction(e   -> innerPane.show("dashboard"));
-        reservation.setOnAction(e -> innerPane.show("reservation"));
-        trips.setOnAction(e -> {
-            tripsPanel.resetToPending();
-            innerPane.show("trips");
-        });
-        profile.setOnAction(e -> {
+        // Profile icon button — mirrors DriverUI's profileBtn
+        Button profileBtn = new Button("👤");
+        profileBtn.getStyleClass().add("profile-icon-btn");
+        profileBtn.setOnAction(e -> {
             profilePanel.loadProfile(userId);
             innerPane.show("profile");
+            clearActiveNav();
         });
-        logout.setOnAction(e -> {
-            if (FxUtil.confirm(this, "Are you sure you want to Logout?", "Confirm")) {
+
+        Button logoutBtn = FxUtil.btnDanger("Log Out");
+        logoutBtn.setOnAction(e -> {
+            if (FxUtil.confirm(this, "Are you sure you want to logout?", "Logout Confirmation")) {
                 insertAuditLog(userId, "Logged Out");
                 mainPane.show("LOGIN");
             }
         });
 
-        nav.getChildren().addAll(logoBox, dashboard, reservation, trips, profile, logout);
-        setTop(nav);
+        HBox rightBar = new HBox(10, profileBtn, logoutBtn);
+        rightBar.setAlignment(Pos.CENTER_RIGHT);
+        rightBar.setPadding(new Insets(0, 10, 0, 0));
+
+        header.getChildren().addAll(brand, FxUtil.hgrow(), rightBar);
+
+        // ── Navigation bar (gradient, same structure as DriverUI) ──────────
+        HBox navBar = new HBox(20);
+        navBar.getStyleClass().add("gradient-panel");
+        navBar.setPrefHeight(45);
+        navBar.setAlignment(Pos.CENTER_LEFT);
+        navBar.setPadding(new Insets(0, 30, 0, 30));
+
+        String[] navLabels = {"DASHBOARD", "RESERVATION", "TRIPS"};
+        String[] navCards  = {"dashboard", "reservation", "trips"};
+        
+        navButtons = new Button[navLabels.length];
+
+        for (int i = 0; i < navLabels.length; i++) {
+            final int idx = i;
+            Button btn = new Button(navLabels[i]);
+            btn.getStyleClass().add("topnav-btn");
+            btn.setOnAction(e -> {
+                // Extra logic for trips and profile, same as before
+                if (navCards[idx].equals("trips"))   tripsPanel.resetToPending();
+                //if (navCards[idx].equals("profile"))  profilePanel.loadProfile(userId);
+                innerPane.show(navCards[idx]);
+                setActiveNav(idx);
+            });
+            navButtons[i] = btn;
+            navBar.getChildren().add(btn);
+        }
+
+        // ── Stack header + navBar as top section ───────────────────────────
+        VBox topSection = new VBox(header, navBar);
+        setTop(topSection);
     }
 
     private void createPanels() {
-        home        homePanel     = new home(username, innerPane);
-        tripsPanel                = new trips(userId);
-        profilePanel              = new profile(userId);
-        reservation reservPanel   = new reservation(innerPane, tripsPanel, userId);
+        home        homePanel   = new home(username, innerPane);
+        tripsPanel              = new trips(userId);
+        profilePanel            = new profile(userId);
+        reservation reservPanel = new reservation(innerPane, tripsPanel, userId);
 
         innerPane.addCard("dashboard",   homePanel);
         innerPane.addCard("trips",       tripsPanel);
@@ -99,21 +128,31 @@ public class Passenger extends BorderPane {
         innerPane.addCard("reservation", reservPanel);
         innerPane.show("dashboard");
         setCenter(innerPane);
+
+        // Mark Dashboard as active on startup
+        setActiveNav(0);
     }
 
-    private Button navButton(String text, String style) {
-        Button b = new Button(text);
-        b.setStyle(style);
-        b.setOnMouseEntered(e -> b.setStyle(style + "-fx-background-color:rgba(255,255,255,0.10);"));
-        b.setOnMouseExited(e  -> b.setStyle(style));
-        return b;
+    // ── Nav active state helpers (mirrors DriverUI exactly) ────────────────
+    private void setActiveNav(int activeIdx) {
+        for (int i = 0; i < navButtons.length; i++) {
+            if (navButtons[i] == null) continue;
+            navButtons[i].getStyleClass().removeAll("topnav-btn-active");
+            if (i == activeIdx) navButtons[i].getStyleClass().add("topnav-btn-active");
+        }
     }
 
+    private void clearActiveNav() {
+        for (Button b : navButtons) b.getStyleClass().remove("topnav-btn-active");
+    }
+
+    // ── DB helpers ─────────────────────────────────────────────────────────
     private int getUserIdFromUsername(String uname) {
         try {
             DbConnectMsSql db = new DbConnectMsSql();
             Connection c = db.conn;
-            PreparedStatement ps = c.prepareStatement("SELECT user_id FROM Users WHERE username=?");
+            PreparedStatement ps = c.prepareStatement(
+                    "SELECT user_id FROM Users WHERE username=?");
             ps.setString(1, uname);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) return rs.getInt("user_id");
@@ -125,8 +164,10 @@ public class Passenger extends BorderPane {
         try {
             DbConnectMsSql db = new DbConnectMsSql();
             PreparedStatement ps = db.conn.prepareStatement(
-                "INSERT INTO Audit_Log (user_id, log_status) VALUES (?, ?)");
-            ps.setInt(1, uid); ps.setString(2, status); ps.executeUpdate();
+                    "INSERT INTO Audit_Log (user_id, log_status) VALUES (?, ?)");
+            ps.setInt(1, uid);
+            ps.setString(2, status);
+            ps.executeUpdate();
         } catch (Exception e) { e.printStackTrace(); }
     }
 }

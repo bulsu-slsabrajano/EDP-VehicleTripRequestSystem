@@ -39,6 +39,9 @@ public class MainFrame extends Application {
         scene.getStylesheets().add(FxUtil.CSS);
 
         stage.setTitle("Vehicle Trip Reservation System – EduTRIP");
+        
+        scene.getStylesheets().add(FxUtil.CSS);
+        
         stage.setScene(scene);
         stage.setMaximized(true);
         stage.show();

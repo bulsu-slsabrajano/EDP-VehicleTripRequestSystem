@@ -153,6 +153,8 @@ public class VehiclePanel extends BorderPane {
         private final Label lblStatus = FxUtil.statusLabel();
 
         AddVehiclePanel() {
+        	lblStatus.setMaxWidth(Double.MAX_VALUE);
+        	lblStatus.setAlignment(Pos.CENTER);
             setBackground(Background.fill(Color.WHITE));
             setAlignment(Pos.CENTER);
 
@@ -225,6 +227,8 @@ public class VehiclePanel extends BorderPane {
         private final Label lblStatus = FxUtil.statusLabel();
 
         UpdateVehiclePanel() {
+        	lblStatus.setMaxWidth(Double.MAX_VALUE);
+        	lblStatus.setAlignment(Pos.CENTER);
             setBackground(Background.fill(Color.WHITE));
             setAlignment(Pos.CENTER);
             cmbStatus.setValue("Available");
@@ -292,6 +296,8 @@ public class VehiclePanel extends BorderPane {
         private final Label lblMsg = FxUtil.statusLabel();
 
         MakeUnavailablePanel(){
+        	lblMsg.setMaxWidth(Double.MAX_VALUE);
+        	lblMsg.setAlignment(Pos.CENTER);
             setBackground(Background.fill(Color.WHITE)); setAlignment(Pos.CENTER);
             VBox card=new VBox(0); card.getStyleClass().add("card"); card.setMaxWidth(520);
             Label title=new Label("Make Vehicle Unavailable");

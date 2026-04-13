@@ -28,25 +28,33 @@ public class home extends VBox {
         this.username  = username;
         this.innerPane = innerPane;
         this.conn      = new DbConnectMsSql();
-        setBackground(Background.fill(Color.web("#F0F2F5")));
+        setBackground(Background.fill(Color.WHITE));
         buildUI();
         loadDashboard();
     }
 
     private void buildUI() {
         // ── Gradient header ───────────────────────────────────────────────────
-        HBox header = new HBox();
-        header.getStyleClass().add("gradient-panel");
-        header.setPadding(new Insets(20, 25, 20, 25));
-        header.setPrefHeight(76);
+        //HBox header = new HBox();
+        //header.getStyleClass().add("gradient-panel");
+       // header.setPadding(new Insets(10, 20, 10, 20));
+//        header.setPrefHeight(76);
 
         Label welcomeLbl = new Label("WELCOME, " + username + " !");
-        welcomeLbl.setStyle("-fx-font-weight:bold;-fx-font-size:26px;-fx-text-fill:white;");
-        header.getChildren().add(welcomeLbl);
+        welcomeLbl.getStyleClass().add("welcome-title");
+        welcomeLbl.setStyle("-fx-font-weight:bold;-fx-font-size:26px;-fx-text-fill:#1A2B6D;");
+        //header.getChildren().add(welcomeLbl);
+        
+        Button refresh = FxUtil.btnPrimary("Refresh");
+        refresh.setOnAction(e -> loadDashboard());
+        
+        HBox header = new HBox(welcomeLbl, FxUtil.hgrow(), refresh);
+        header.setAlignment(Pos.CENTER_LEFT);
+        header.setPadding(new Insets(10, 20, 6, 20));
 
         // ── Content area ──────────────────────────────────────────────────────
-        VBox content = new VBox(15);
-        content.setPadding(new Insets(15));
+        VBox content = new VBox(8);
+        content.setPadding(new Insets(0, 15, 15, 15));
         content.setBackground(Background.fill(Color.TRANSPARENT));
         VBox.setVgrow(content, Priority.ALWAYS);
 
@@ -63,10 +71,9 @@ public class home extends VBox {
         Label quickTitle = new Label("Quick Actions");
         quickTitle.setStyle("-fx-font-weight:bold;-fx-font-size:15px;");
 
-        Button refresh = FxUtil.btnPrimary("Refresh");
-        refresh.setOnAction(e -> loadDashboard());
+        
 
-        HBox quickTop = new HBox(quickTitle, FxUtil.hgrow(), refresh);
+        HBox quickTop = new HBox(quickTitle);
         quickTop.setAlignment(Pos.CENTER_LEFT);
 
         HBox btnRow = new HBox(10,

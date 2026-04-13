@@ -36,6 +36,7 @@ public class HomePanel extends VBox {
         // ── Top bar ──────────────────────────────────────────────────────────
         welcomeLabel = new Label("Welcome, " + nvl(DriverData.username));
         welcomeLabel.getStyleClass().add("welcome-title");
+        //welcomeLabel.getStyleClass().add("welcome-style");
         welcomeLabel.setStyle("-fx-font-weight:bold;-fx-font-size:26px;-fx-text-fill:#1A2B6D;");
 
         Button btnRefresh = FxUtil.btnPrimary("Refresh");
@@ -119,7 +120,7 @@ public class HomePanel extends VBox {
         });
 
         HBox center = new HBox(20, statusLbl, toggleBtn);
-        center.setAlignment(Pos.CENTER_LEFT);
+        center.setAlignment(Pos.CENTER);
         center.setPadding(new Insets(6));
         center.setStyle("-fx-border-color:black;-fx-border-width:1px;-fx-background-color:white;");
 

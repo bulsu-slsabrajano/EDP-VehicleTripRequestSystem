@@ -36,20 +36,21 @@ public class DriverUI extends BorderPane {
     private void buildUI() {
         // ── Header bar ───────────────────────────────────────────────────────
         HBox header = new HBox();
-        header.setBackground(Background.fill(Color.WHITE));
+        header.setBackground(Background.fill(Color.web("#141E32")));
+        //header.getStyleClass().add("gradient-panel");
         header.setAlignment(Pos.CENTER_LEFT);
         header.setPadding(new Insets(5, 10, 5, 15));
 
         ImageView logoImg;
         try {
             Image img = new Image(getClass().getResourceAsStream(
-                    "/com/project/resources/companyLogo.png"), 40, 40, true, true);
+                    "/com/project/resources/companyLogo.png"), 80, 60, true, true);
             logoImg = new ImageView(img);
         } catch (Exception e) { logoImg = new ImageView(); }
-        logoImg.setFitWidth(40); logoImg.setFitHeight(40);
+        logoImg.setFitWidth(80); logoImg.setFitHeight(60);
 
         Label titleLbl = new Label("EduTrip");
-        titleLbl.setStyle("-fx-font-weight:bold;-fx-font-size:24px;-fx-padding:0 0 0 6px;");
+        titleLbl.getStyleClass().addAll("header-font");
 
         HBox brand = new HBox(6, logoImg, titleLbl);
         brand.setAlignment(Pos.CENTER_LEFT);
