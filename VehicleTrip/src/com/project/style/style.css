@@ -380,6 +380,7 @@
     -fx-background-color: transparent;
     -fx-border-width: 0;
     -fx-cursor: hand;
+	-fx-font-family: 'Segoe UI Emoji';
     /*-fx-text-fill: #0F2573;*/
 	-fx-text-fill: #FFFFFF;
     -fx-padding: 0 30px 0 0;

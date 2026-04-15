@@ -1,15 +1,5 @@
 package com.passenger.panel;
 
-import com.project.dbConnection.DbConnectMsSql;
-import com.project.util.CardPane;
-import com.project.util.FxUtil;
-import javafx.collections.FXCollections;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -17,6 +7,28 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.project.dbConnection.DbConnectMsSql;
+import com.project.util.CardPane;
+import com.project.util.FxUtil;
+
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.DateCell;
+import javafx.scene.control.DatePicker;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Spinner;
+import javafx.scene.control.SpinnerValueFactory;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 
 public class reservation extends VBox {
 
@@ -49,11 +61,10 @@ public class reservation extends VBox {
     private void buildUI() {
         // ── Gradient header ────────────────────────────────────────────────
         HBox header = new HBox();
-        //header.getStyleClass().add("gradient-panel");
         header.setAlignment(Pos.CENTER);
         header.setPadding(new Insets(20, 25, 20, 25));
         header.setPrefHeight(76);
-        
+
         Label hTitle = new Label("Book a Trip");
         hTitle.getStyleClass().add("welcome-title");
         hTitle.setStyle("-fx-font-weight:bold;-fx-font-size:26px;-fx-text-fill:#1A2B6D;");
@@ -77,6 +88,40 @@ public class reservation extends VBox {
         Label schedLbl = FxUtil.sectionLabel("Trip Schedule");
         GridPane.setColumnSpan(schedLbl, 2);
         form.add(schedLbl, 0, y++);
+
+        // ── DatePicker restrictions (no past dates) ───────────────────────
+        dpStartDate.setDayCellFactory(picker -> new DateCell() {
+            @Override
+            public void updateItem(LocalDate date, boolean empty) {
+                super.updateItem(date, empty);
+                if (date.isBefore(LocalDate.now())) {
+                    setDisable(true);
+                    setStyle("-fx-background-color:#ffe0e0;");
+                }
+            }
+        });
+
+        dpEndDate.setDayCellFactory(picker -> new DateCell() {
+            @Override
+            public void updateItem(LocalDate date, boolean empty) {
+                super.updateItem(date, empty);
+                LocalDate start = dpStartDate.getValue() != null
+                        ? dpStartDate.getValue() : LocalDate.now();
+                if (date.isBefore(start)) {
+                    setDisable(true);
+                    setStyle("-fx-background-color:#ffe0e0;");
+                }
+            }
+        });
+
+        // Auto-adjust end date when start date changes
+        dpStartDate.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && dpEndDate.getValue() != null
+                    && dpEndDate.getValue().isBefore(newVal)) {
+                dpEndDate.setValue(newVal);
+            }
+        });
+        // ─────────────────────────────────────────────────────────────────
 
         dpStartDate.getStyleClass().add("date-field"); dpStartDate.setPrefWidth(260);
         dpEndDate.getStyleClass().add("date-field");   dpEndDate.setPrefWidth(260);
@@ -130,7 +175,7 @@ public class reservation extends VBox {
 
         VBox wrapper = new VBox(card);
         wrapper.setAlignment(Pos.CENTER);
-        
+
         ScrollPane scroll = new ScrollPane(wrapper);
         scroll.setFitToWidth(true);
         scroll.setFitToHeight(true);
@@ -139,17 +184,73 @@ public class reservation extends VBox {
         scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scroll.setPannable(true);
-        
+
         VBox.setVgrow(scroll, Priority.ALWAYS);
 
         getChildren().addAll(header, scroll);
-        //VBox.setVgrow(scroll, Priority.ALWAYS);
 
         btnSubmit.setOnAction(e -> submitBooking());
         btnCancel.setOnAction(e -> {
             if (FxUtil.confirm(this, "Are you sure you want to cancel?", "Confirm Cancel"))
                 resetForm();
         });
+    }
+
+    // ── Validation ────────────────────────────────────────────────────────────
+    private boolean validateDatesAndTimes() {
+        LocalDate today     = LocalDate.now();
+        LocalTime now       = LocalTime.now();
+        LocalDate startDate = dpStartDate.getValue();
+        LocalDate endDate   = dpEndDate.getValue();
+
+        // 1. Null check
+        if (startDate == null || endDate == null) {
+            FxUtil.showError(this, "Please select valid Start and End dates.");
+            return false;
+        }
+
+        // 2. Start date must not be in the past
+        if (startDate.isBefore(today)) {
+            FxUtil.showError(this, "Start date cannot be in the past.");
+            return false;
+        }
+
+        // 3. End date must not be before start date
+        if (endDate.isBefore(startDate)) {
+            FxUtil.showError(this, "End date cannot be before Start date.");
+            return false;
+        }
+
+        // 4. Parse times
+        java.sql.Time startTime, endTime;
+        try {
+            startTime = parseTime(txtStartTime.getText().trim());
+            endTime   = parseTime(txtEndTime.getText().trim());
+        } catch (Exception e) {
+            FxUtil.showError(this, "Invalid time format! Use HH:MM");
+            return false;
+        }
+
+        LocalTime parsedStart = startTime.toLocalTime();
+        LocalTime parsedEnd   = endTime.toLocalTime();
+
+        // 5. If booking is today, start time must not be in the past
+        if (startDate.isEqual(today) && parsedStart.isBefore(now)) {
+            FxUtil.showError(this,
+                "Start time cannot be in the past for today's booking.\n" +
+                "Current time is: " + now.getHour() + ":" +
+                String.format("%02d", now.getMinute()));
+            return false;
+        }
+
+        // 6. If same day booking, end time must be after start time
+        if (startDate.isEqual(endDate) && !parsedEnd.isAfter(parsedStart)) {
+            FxUtil.showError(this,
+                "End time must be after Start time on the same day.");
+            return false;
+        }
+
+        return true;
     }
 
     private void loadAvailableAssignments(int numPassengers) {
@@ -185,24 +286,25 @@ public class reservation extends VBox {
     }
 
     private void submitBooking() {
+        // ── Required field check ──────────────────────────────────────────
         if (txtPickup.getText().trim().isEmpty() || txtDestination.getText().trim().isEmpty()) {
-            FxUtil.showError(this, "Pickup and Destination are required."); 
+            FxUtil.showError(this, "Pickup and Destination are required.");
             return;
         }
-        LocalDate sd = dpStartDate.getValue(), ed = dpEndDate.getValue();
-        if (sd == null || ed == null) { FxUtil.showError(this, "Please select valid dates."); 
-        	return; 
-        }
 
-        java.sql.Date startDate = java.sql.Date.valueOf(sd);
-        java.sql.Date endDate   = java.sql.Date.valueOf(ed);
+        // ── Date & time validation (replaces the old null check + parseTime) ──
+        if (!validateDatesAndTimes()) return;
 
+        // Safe to parse now
+        java.sql.Date startDate = java.sql.Date.valueOf(dpStartDate.getValue());
+        java.sql.Date endDate   = java.sql.Date.valueOf(dpEndDate.getValue());
         java.sql.Time startTime, endTime;
         try {
             startTime = parseTime(txtStartTime.getText().trim());
             endTime   = parseTime(txtEndTime.getText().trim());
         } catch (Exception e) {
-            FxUtil.showError(this, "Invalid time format! Use HH:MM"); return;
+            FxUtil.showError(this, "Invalid time format! Use HH:MM");
+            return;
         }
 
         int numPax = passengersSpinner.getValue();

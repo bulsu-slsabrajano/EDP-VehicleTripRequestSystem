@@ -1,18 +1,30 @@
 package com.admin.panel;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+
+import org.kordamp.ikonli.Ikon;
+import org.kordamp.ikonli.fontawesome5.FontAwesomeSolid;
+import org.kordamp.ikonli.javafx.FontIcon;
+
 import com.project.dbConnection.DbConnectMsSql;
 import com.project.util.CardPane;
 import com.project.util.FxUtil;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.ContentDisplay;
+import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.*;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 
 public class AdminUiPanel extends BorderPane {
 
@@ -84,14 +96,14 @@ public class AdminUiPanel extends BorderPane {
         contentPane.addCard("Audit Logs",         wrap("Audit Logs",         logPanel));
         contentPane.addCard("Profile",            wrap("Profile",            profilePanel));
 
-        Button btnDashboard = navBtn("Dashboard");
-        Button btnUsers     = navBtn("Users");
-        Button btnVehicles  = navBtn("Vehicles");
-        Button btnVehAss    = navBtn("Vehicle Assignment");
-        Button btnTrips     = navBtn("Trips");
-        Button btnRatings   = navBtn("Ratings");
-        Button btnAudit     = navBtn("Audit Logs");
-        Button btnLogout    = navBtn("Log Out");
+        Button btnDashboard = navBtn("Dashboard",          FontAwesomeSolid.HOME);
+        Button btnUsers     = navBtn("Users",              FontAwesomeSolid.USERS);
+        Button btnVehicles  = navBtn("Vehicles",           FontAwesomeSolid.BUS);
+        Button btnVehAss    = navBtn("Vehicle Assignment", FontAwesomeSolid.CLIPBOARD_LIST);
+        Button btnTrips     = navBtn("Trips",              FontAwesomeSolid.MAP_MARKED_ALT);
+        Button btnRatings   = navBtn("Ratings",            FontAwesomeSolid.STAR);
+        Button btnAudit     = navBtn("Audit Logs",         FontAwesomeSolid.FILE_ALT);
+        Button btnLogout    = navBtn("Log Out",            FontAwesomeSolid.SIGN_OUT_ALT);
 
         addNav(btnDashboard, "Dashboard");
         addNav(btnUsers,     "Users");
@@ -133,7 +145,17 @@ public class AdminUiPanel extends BorderPane {
         HBox.setHgrow(titleLbl, Priority.ALWAYS);
 
         Button profileIcon = new Button("👤");
-        profileIcon.getStyleClass().add("profile-icon-btn");
+
+        profileIcon.setStyle(
+            "-fx-font-size: 22px;" +                 // larger icon
+            "-fx-background-color: transparent;" +
+            "-fx-border-width: 0;" +
+            "-fx-cursor: hand;" +
+            "-fx-text-fill: #0F2573;" +              // your desired color
+            "-fx-font-family: 'Segoe UI Emoji';" +  // emoji font
+            "-fx-padding: 0 30px 0 0;"
+        );
+
         profileIcon.setOnAction(e -> {
             profilePanel.loadProfile(loggedInUserId);
             clearSelection();
@@ -151,10 +173,16 @@ public class AdminUiPanel extends BorderPane {
     }
 
     // ── Nav button factory ───────────────────────────────────────────────────
-    private Button navBtn(String text) {
-        Button b = new Button(text);
+    private Button navBtn(String text, Ikon icon) {
+        FontIcon fi = new FontIcon(icon);
+        fi.setIconSize(16);
+        fi.setIconColor(Color.WHITE);
+
+        Button b = new Button(text, fi);
         b.getStyleClass().add("nav-btn");
         b.setMaxWidth(Double.MAX_VALUE);
+        b.setContentDisplay(ContentDisplay.LEFT);
+        b.setGraphicTextGap(10);
         return b;
     }
 
