@@ -33,7 +33,7 @@ public class HomePanel extends VBox {
     }
 
     private void buildUI() {
-        // ── Top bar ──────────────────────────────────────────────────────────
+        
         welcomeLabel = new Label("Welcome, " + nvl(DriverData.username));
         welcomeLabel.getStyleClass().add("welcome-title");
         //welcomeLabel.getStyleClass().add("welcome-style");
@@ -46,20 +46,20 @@ public class HomePanel extends VBox {
         topBar.setAlignment(Pos.CENTER_LEFT);
         topBar.setPadding(new Insets(10, 20, 10, 20));
 
-        // ── Stat cards row ───────────────────────────────────────────────────
+        //cards row
         HBox statsRow = new HBox(10,
             statCard("Pending Trips",  pendingCount,  "#FF8C00"),
             statCard("Approved Trips", approvedCount, "#0066CC"),
             statCard("Total Trips",    totalCount,    "#008000"));
         statsRow.setPadding(new Insets(0, 20, 10, 20));
 
-        // ── Status toggle card ────────────────────────────────────────────────
+        
         VBox statusCard = buildStatusCard();
         HBox.setHgrow(statusCard, Priority.ALWAYS);
         HBox statusRow = new HBox(statusCard);
         statusRow.setPadding(new Insets(0, 20, 10, 20));
 
-        // ── Recent trips ─────────────────────────────────────────────────────
+        //Recent trips 
         Label recentTitle = new Label("Recent Trips");
         recentTitle.getStyleClass().add("title-small");
         recentTitle.setPadding(new Insets(0, 0, 6, 0));
@@ -77,7 +77,7 @@ public class HomePanel extends VBox {
         VBox.setVgrow(recentBox, Priority.ALWAYS);
     }
 
-    // ── Card builders ─────────────────────────────────────────────────────────
+    //Card 
     private VBox statCard(String title, Label value, String colour) {
         VBox card = new VBox(4);
         card.setStyle("-fx-background-color:white;-fx-border-color:" + colour +
@@ -128,7 +128,7 @@ public class HomePanel extends VBox {
         return card;
     }
 
-    // ── Data loading ──────────────────────────────────────────────────────────
+
     public void loadData() {
         welcomeLabel.setText("Welcome, " + nvl(DriverData.username));
         loadStats();

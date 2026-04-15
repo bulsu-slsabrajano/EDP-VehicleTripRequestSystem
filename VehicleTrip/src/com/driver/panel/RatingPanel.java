@@ -35,7 +35,7 @@ public class RatingPanel extends VBox {
         body.setPadding(new Insets(0, 20, 20, 20));
         VBox.setVgrow(body, Priority.ALWAYS);
 
-        // ── Summary card ─────────────────────────────────────────────────────
+       
         VBox summaryCard = new VBox(10);
         summaryCard.setStyle(
             "-fx-border-color:#C8D2E6;-fx-border-width:1px;-fx-border-radius:6px;" +
@@ -61,7 +61,7 @@ public class RatingPanel extends VBox {
 
         summaryCard.getChildren().addAll(summaryTitle, grid);
 
-        // ── History table ─────────────────────────────────────────────────────
+        //History table 
         VBox historyCard = new VBox(10);
         historyCard.setStyle(
             "-fx-border-color:#C8D2E6;-fx-border-width:1px;-fx-border-radius:6px;" +

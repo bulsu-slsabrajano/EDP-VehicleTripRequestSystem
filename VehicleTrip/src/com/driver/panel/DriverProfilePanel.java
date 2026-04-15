@@ -195,8 +195,8 @@ public class DriverProfilePanel extends VBox {
             for (TextField f : contactFields) {
                 String num = f.getText().trim();
                 if (!num.isEmpty()) {
-                    if (num.length() != 10) {
-                        FxUtil.setError(lblStatus, "Contact number must be exactly 10 digits!"); return;
+                    if (num.length() != 11) {
+                        FxUtil.setError(lblStatus, "Contact number must be exactly 11 digits!"); return;
                     }
                     psIns.setInt(1, currentUserId); psIns.setString(2, num); psIns.addBatch();
                 }

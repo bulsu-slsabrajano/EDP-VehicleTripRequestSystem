@@ -19,13 +19,13 @@ public class MainFrame extends Application {
     public void start(Stage stage) {
         mainPane = new CardPane();
 
-        // Driver panel (pre-created so LoginPanel can reference it)
+        // Driver panel 
         DriverUI driverPanel = new DriverUI(mainPane);
 
         // Login
         LoginPanel loginPanel = new LoginPanel(mainPane, driverPanel);
 
-        // Passenger (placeholder – LoginPanel replaces it per session)
+        // Passenger 
         Passenger passengerPlaceholder = new Passenger("Guest", mainPane);
 
         mainPane.addCard("LOGIN",     loginPanel);

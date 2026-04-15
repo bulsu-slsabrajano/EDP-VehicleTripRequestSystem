@@ -84,15 +84,23 @@ public class VehicleAssignmentPanel extends BorderPane {
         Button btnUpdate = FxUtil.btnPrimary("Update");
         Button btnCancel = FxUtil.btnDanger("Cancel Assignment");
 
-        btnAssign.setOnAction(e -> { assignPanel.resetFields(); cards.show("ASSIGN"); });
+        btnAssign.setOnAction(e -> { assignPanel.resetFields(); 
+        cards.show("ASSIGN"); });
         btnUpdate.setOnAction(e -> {
             Object[] row = table.getSelectionModel().getSelectedItem();
-            if (row == null) { FxUtil.showInfo(this, "Select an assignment first!"); return; }
-            updatePanel.load((int) row[0]); cards.show("UPDATE");
+            if (row == null) { 
+            	FxUtil.showInfo(this, "Select an assignment first!"); 
+            	return; 
+            }
+            updatePanel.load((int) row[0]); 
+            cards.show("UPDATE");
         });
         btnCancel.setOnAction(e -> {
             Object[] row = table.getSelectionModel().getSelectedItem();
-            if (row == null) { FxUtil.showInfo(this, "Select an assignment first!"); return; }
+            if (row == null) { 
+            	FxUtil.showInfo(this, "Select an assignment first!"); 
+            	return;
+            }
             cancelPanel.setDetails((int)row[0],(String)row[1],(String)row[2],
                 (String)row[3],String.valueOf(row[4]),(String)row[5]);
             cards.show("CANCEL");
@@ -113,20 +121,25 @@ public class VehicleAssignmentPanel extends BorderPane {
             tableData.clear();
             String sql = "SELECT assignment_id,driver,vehicle,admin,date_assigned,assignment_status FROM vw_VehicleAssignments";
             if (!"All".equals(filter)) sql += " WHERE LOWER(assignment_status)=LOWER(?)";
+           
             PreparedStatement ps = conn.prepareStatement(sql);
-            if (!"All".equals(filter)) ps.setString(1, filter);
+            if (!"All".equals(filter)) ps.setString(1, filter);      
             ResultSet rs = ps.executeQuery();
+            
             while (rs.next()) {
                 tableData.add(new Object[]{
-                    rs.getInt("assignment_id"), rs.getString("driver"),
-                    rs.getString("vehicle"), rs.getString("admin"),
-                    rs.getDate("date_assigned"), rs.getString("assignment_status")
+                    rs.getInt("assignment_id"), 
+                    rs.getString("driver"),
+                    rs.getString("vehicle"), 
+                    rs.getString("admin"),
+                    rs.getDate("date_assigned"), 
+                    rs.getString("assignment_status")
                 });
             }
         } catch (Exception e) { e.printStackTrace(); }
     }
 
-    // ── Assign Panel ──────────────────────────────────────────────────────────
+    
     class AssignPanel extends VBox {
         private ComboBox<String> cmbDriver = new ComboBox<>(), cmbVehicle = new ComboBox<>();
         private ComboBox<String> cmbStatus = FxUtil.styledCombo(FXCollections.observableArrayList("Active","Inactive"));
@@ -139,22 +152,40 @@ public class VehicleAssignmentPanel extends BorderPane {
         AssignPanel() {
         	lblStatus.setMaxWidth(Double.MAX_VALUE);
         	lblStatus.setAlignment(Pos.CENTER);
-            setBackground(Background.fill(Color.WHITE)); setAlignment(Pos.CENTER);
-            cmbDriver.getStyleClass().add("combo-field"); cmbDriver.setPrefWidth(260);
-            cmbVehicle.getStyleClass().add("combo-field"); cmbVehicle.setPrefWidth(260);
+        	
+            setBackground(Background.fill(Color.WHITE)); 
+            setAlignment(Pos.CENTER);
+            
+            cmbDriver.getStyleClass().add("combo-field");
+            cmbDriver.setPrefWidth(260);
+            cmbVehicle.getStyleClass().add("combo-field"); 
+            cmbVehicle.setPrefWidth(260);
             cmbStatus.setValue("Active");
-            VBox card = new VBox(0); card.getStyleClass().add("card"); card.setMaxWidth(520);
+            
+            VBox card = new VBox(0);
+            card.getStyleClass().add("card");
+            card.setMaxWidth(520);
+            
             Label title = new Label("Assign Vehicle");
-            title.getStyleClass().add("title-medium"); title.setMaxWidth(Double.MAX_VALUE); title.setAlignment(Pos.CENTER);
+            title.getStyleClass().add("title-medium");
+            title.setMaxWidth(Double.MAX_VALUE);
+            title.setAlignment(Pos.CENTER);
+            
             GridPane form = FxUtil.formGrid(); int y=0;
             FxUtil.addFormRow(form,"Driver:",       cmbDriver,  y++);
             FxUtil.addFormRow(form,"Vehicle:",      cmbVehicle, y++);
             FxUtil.addFormRow(form,"Admin:",        txtAdmin,   y++);
             FxUtil.addFormRow(form,"Date Assigned:",txtDate,    y++);
             FxUtil.addFormRow(form,"Status:",       cmbStatus,  y);
+            
             Button btnSave=FxUtil.btnPrimary("Save"), btnBack=FxUtil.btnOutlinePrimary("Back");
-            btnSave.setOnAction(e->save()); btnBack.setOnAction(e->{cards.show("LIST");loadAssignments("All");});
-            HBox btnRow=new HBox(15,btnSave,btnBack); btnRow.setAlignment(Pos.CENTER); btnRow.setPadding(new Insets(20,0,0,0));
+            btnSave.setOnAction(e->save());
+            btnBack.setOnAction(e->{cards.show("LIST");
+            loadAssignments("All");});
+            
+            HBox btnRow=new HBox(15,btnSave,btnBack);
+            btnRow.setAlignment(Pos.CENTER); 
+            btnRow.setPadding(new Insets(20,0,0,0));
             card.getChildren().addAll(title,FxUtil.spacer(20),form,btnRow,FxUtil.spacer(10),lblStatus);
             getChildren().add(card);
         }
@@ -162,14 +193,16 @@ public class VehicleAssignmentPanel extends BorderPane {
         private void loadAdminName(int id){
             try{
                 PreparedStatement ps=conn.prepareStatement("SELECT first_name+' '+last_name AS n FROM Users WHERE user_id=?");
-                ps.setInt(1,id); ResultSet rs=ps.executeQuery();
+                ps.setInt(1,id); 
+                ResultSet rs=ps.executeQuery();
                 if(rs.next()) txtAdmin.setText(rs.getString("n"));
             }catch(Exception e){e.printStackTrace();}
         }
         void resetFields(){
             loadDropdowns();
             txtDate.setText(new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()));
-            cmbStatus.setValue("Active"); lblStatus.setText(" ");
+            cmbStatus.setValue("Active"); 
+            lblStatus.setText(" ");
             if(adminId_!=-1) loadAdminName(adminId_);
         }
         private void loadDropdowns(){
@@ -178,24 +211,41 @@ public class VehicleAssignmentPanel extends BorderPane {
                 PreparedStatement psD=conn.prepareStatement(
                     "SELECT d.driver_id, u.first_name+' '+u.last_name AS name FROM Driver d JOIN Users u ON d.driver_id=u.user_id WHERE d.driver_status='Available'");
                 ResultSet rsD=psD.executeQuery();
-                while(rsD.next()){cmbDriver.getItems().add(rsD.getString("name"));dIds.add(rsD.getInt("driver_id"));}
+                
+                while(rsD.next()){cmbDriver.getItems().add(rsD.getString("name"));
+                dIds.add(rsD.getInt("driver_id"));}
                 driverIds=dIds.stream().mapToInt(i->i).toArray();
                 cmbVehicle.getItems().clear(); List<Integer> vIds=new ArrayList<>();
                 PreparedStatement psV=conn.prepareStatement(
                     "SELECT vehicle_id, vehicle_model+'  ('+plate_number+')' AS label FROM Vehicle WHERE vehicle_status='Available'");
                 ResultSet rsV=psV.executeQuery();
-                while(rsV.next()){cmbVehicle.getItems().add(rsV.getString("label"));vIds.add(rsV.getInt("vehicle_id"));}
+                
+                while(rsV.next()){cmbVehicle.getItems().add(rsV.getString("label"));
+                vIds.add(rsV.getInt("vehicle_id"));}
                 vehicleIds=vIds.stream().mapToInt(i->i).toArray();
             }catch(Exception e){e.printStackTrace();}
         }
         private void save(){
-            if(cmbDriver.getItems().isEmpty()){FxUtil.setError(lblStatus,"No available drivers!");return;}
-            if(cmbVehicle.getItems().isEmpty()){FxUtil.setError(lblStatus,"No available vehicles!");return;}
-            if(adminId_==-1){FxUtil.setError(lblStatus,"Admin not set!");
-            return;}
+            if(cmbDriver.getItems().isEmpty()){
+            	FxUtil.setError(lblStatus,"No available drivers!");
+            	return;
+            }
+            
+            if(cmbVehicle.getItems().isEmpty()){
+            	FxUtil.setError(lblStatus,"No available vehicles!");
+            	return;
+            }
+            if(adminId_==-1){
+            	FxUtil.setError(lblStatus,"Admin not set!");
+            	return;
+            }
             java.sql.Date date;
             try{date=java.sql.Date.valueOf(txtDate.getText().trim());}
-            catch(Exception ex){FxUtil.setError(lblStatus,"Invalid date! Use yyyy-MM-dd");return;}
+            catch(Exception ex){
+            	FxUtil.setError(lblStatus,"Invalid date! Use yyyy-MM-dd");
+            	return;
+            }
+            
             try{
                 int dId=driverIds[cmbDriver.getSelectionModel().getSelectedIndex()];
                 int vId=vehicleIds[cmbVehicle.getSelectionModel().getSelectedIndex()];
@@ -210,11 +260,14 @@ public class VehicleAssignmentPanel extends BorderPane {
                 
                 FxUtil.setSuccess(lblStatus,"Assignment saved successfully!");
                 loadAssignments("All");
-            }catch(Exception e){FxUtil.setError(lblStatus,"Error saving assignment!");e.printStackTrace();}
+            }catch(Exception e){
+            	FxUtil.setError(lblStatus,"Error saving assignment!");
+            	e.printStackTrace();
+            }
         }
     }
 
-    // ── Update Assign Panel ───────────────────────────────────────────────────
+   
     class UpdateAssignPanel extends VBox {
         private int assignId=-1; 
         private String prevStatus="";
@@ -229,21 +282,38 @@ public class VehicleAssignmentPanel extends BorderPane {
         UpdateAssignPanel(){
         	lblStatus.setMaxWidth(Double.MAX_VALUE);
         	lblStatus.setAlignment(Pos.CENTER);
-            setBackground(Background.fill(Color.WHITE)); setAlignment(Pos.CENTER);
-            cmbDriver.getStyleClass().add("combo-field"); cmbDriver.setPrefWidth(260);
-            cmbVehicle.getStyleClass().add("combo-field"); cmbVehicle.setPrefWidth(260);
-            VBox card=new VBox(0); card.getStyleClass().add("card"); card.setMaxWidth(520);
+            
+        	setBackground(Background.fill(Color.WHITE)); 
+        	setAlignment(Pos.CENTER);
+            cmbDriver.getStyleClass().add("combo-field"); 
+            cmbDriver.setPrefWidth(260);
+            cmbVehicle.getStyleClass().add("combo-field");
+            cmbVehicle.setPrefWidth(260);
+            
+            VBox card=new VBox(0);
+            card.getStyleClass().add("card");
+            card.setMaxWidth(520);
+            
             Label title=new Label("Update Assignment");
-            title.getStyleClass().add("title-medium"); title.setMaxWidth(Double.MAX_VALUE); title.setAlignment(Pos.CENTER);
+            title.getStyleClass().add("title-medium");
+            title.setMaxWidth(Double.MAX_VALUE);
+            title.setAlignment(Pos.CENTER);
+            
             GridPane form=FxUtil.formGrid(); int y=0;
             FxUtil.addFormRow(form,"Driver:",       cmbDriver,  y++);
             FxUtil.addFormRow(form,"Vehicle:",      cmbVehicle, y++);
             FxUtil.addFormRow(form,"Admin:",        txtAdmin,   y++);
             FxUtil.addFormRow(form,"Date Assigned:",txtDate,    y++);
             FxUtil.addFormRow(form,"Status:",       cmbStatus,  y);
-            Button btnUpd=FxUtil.btnPrimary("Update"), btnBack=FxUtil.btnOutlinePrimary("Back");
-            btnUpd.setOnAction(e->update()); btnBack.setOnAction(e->{cards.show("LIST");loadAssignments("All");});
-            HBox btnRow=new HBox(15,btnUpd,btnBack); btnRow.setAlignment(Pos.CENTER); btnRow.setPadding(new Insets(20,0,0,0));
+            Button btnUpd=FxUtil.btnPrimary("Update"), 
+            		btnBack=FxUtil.btnOutlinePrimary("Back");
+            btnUpd.setOnAction(e->update()); 
+            btnBack.setOnAction(e->{cards.show("LIST");
+            loadAssignments("All");});
+          
+            HBox btnRow=new HBox(15,btnUpd,btnBack); 
+            btnRow.setAlignment(Pos.CENTER); 
+            btnRow.setPadding(new Insets(20,0,0,0));
             card.getChildren().addAll(title,FxUtil.spacer(20),form,btnRow,FxUtil.spacer(10),lblStatus);
             getChildren().add(card);
         }
@@ -251,35 +321,57 @@ public class VehicleAssignmentPanel extends BorderPane {
             this.adminId_ = id;
         }
         void load(int id){
-            assignId=id; lblStatus.setText(" "); loadAllDropdowns();
+            assignId=id; lblStatus.setText(" ");
+            loadAllDropdowns();
             try{
                 PreparedStatement ps=conn.prepareStatement(
                     "SELECT va.*,du.first_name+' '+du.last_name AS dname,v.vehicle_model+'  ('+v.plate_number+')' AS vlabel,au.first_name+' '+au.last_name AS aname " +
                     "FROM Vehicle_Assignment va JOIN Driver d ON va.driver_id=d.driver_id JOIN Users du ON d.driver_id=du.user_id " +
                     "JOIN Vehicle v ON va.vehicle_id=v.vehicle_id JOIN Admin a ON va.admin_id=a.admin_id JOIN Users au ON a.admin_id=au.user_id " +
                     "WHERE va.assignment_id=?");
-                ps.setInt(1,id); ResultSet rs=ps.executeQuery();
+                ps.setInt(1,id);
+                ResultSet rs=ps.executeQuery();
+                
                 if(rs.next()){
                     int did=rs.getInt("driver_id"), vid=rs.getInt("vehicle_id");
-                    for(int i=0;i<driverIds.length;i++) if(driverIds[i]==did){cmbDriver.getSelectionModel().select(i);break;}
-                    for(int i=0;i<vehicleIds.length;i++) if(vehicleIds[i]==vid){cmbVehicle.getSelectionModel().select(i);break;}
+                    for(int i=0;i<driverIds.length;i++) 
+                    	if(driverIds[i]==did){
+                    		cmbDriver.getSelectionModel().select(i);
+                    		break;
+                    	}
+                    for(int i=0;i<vehicleIds.length;i++) 
+                    	if(vehicleIds[i]==vid){
+                    		cmbVehicle.getSelectionModel().select(i);
+                    		break;
+                    	}
+                    
                     txtDate.setText(rs.getDate("date_assigned").toString());
-                    prevStatus=rs.getString("assignment_status"); cmbStatus.setValue(prevStatus);
+                    prevStatus=rs.getString("assignment_status");
+                    cmbStatus.setValue(prevStatus);
                     txtAdmin.setText(rs.getString("aname"));
                 }
             }catch(Exception e){e.printStackTrace();}
         }
         private void loadAllDropdowns(){
             try{
-                cmbDriver.getItems().clear(); List<Integer> dIds=new ArrayList<>();
+                cmbDriver.getItems().clear(); 
+                List<Integer> dIds=new ArrayList<>();
                 ResultSet rsD=conn.prepareStatement("SELECT d.driver_id, u.first_name+' '+u.last_name AS name FROM Driver d JOIN Users u ON d.driver_id=u.user_id").executeQuery();
-                while(rsD.next()){cmbDriver.getItems().add(rsD.getString("name"));dIds.add(rsD.getInt("driver_id"));}
+                
+                while(rsD.next()){cmbDriver.getItems().add(rsD.getString("name"));
+                dIds.add(rsD.getInt("driver_id"));}
                 driverIds=dIds.stream().mapToInt(i->i).toArray();
-                cmbVehicle.getItems().clear(); List<Integer> vIds=new ArrayList<>();
+                cmbVehicle.getItems().clear();
+                List<Integer> vIds=new ArrayList<>();
                 ResultSet rsV=conn.prepareStatement("SELECT vehicle_id, vehicle_model+'  ('+plate_number+')' AS label FROM Vehicle").executeQuery();
-                while(rsV.next()){cmbVehicle.getItems().add(rsV.getString("label"));vIds.add(rsV.getInt("vehicle_id"));}
+                
+                while(rsV.next()){cmbVehicle.getItems().add(rsV.getString("label"));
+                vIds.add(rsV.getInt("vehicle_id"));}
                 vehicleIds=vIds.stream().mapToInt(i->i).toArray();
-            }catch(Exception e){e.printStackTrace();}
+            }catch(Exception e){
+            	e.printStackTrace();
+            }
+            
         }
         private void update(){
             if(assignId==-1) return;
@@ -287,12 +379,14 @@ public class VehicleAssignmentPanel extends BorderPane {
             try{date=java.sql.Date.valueOf(txtDate.getText().trim());}
             catch(Exception ex){FxUtil.setError(lblStatus,"Invalid date! Use yyyy-MM-dd");return;}
             String newStatus=cmbStatus.getValue();
+          
             try{
                 PreparedStatement ps=conn.prepareStatement(
                     "UPDATE Vehicle_Assignment SET driver_id=?,vehicle_id=?,date_assigned=?,assignment_status=? WHERE assignment_id=?");
                 ps.setInt(1,driverIds[cmbDriver.getSelectionModel().getSelectedIndex()]);
                 ps.setInt(2,vehicleIds[cmbVehicle.getSelectionModel().getSelectedIndex()]);
-                ps.setDate(3,date); ps.setString(4,newStatus); ps.setInt(5,assignId);
+                ps.setDate(3,date); ps.setString(4,newStatus); 
+                ps.setInt(5,assignId);
                 ps.executeUpdate();
                 if("Active".equalsIgnoreCase(prevStatus)&&"Inactive".equalsIgnoreCase(newStatus))
                     cascadeAssignmentInactive(assignId);
@@ -303,44 +397,78 @@ public class VehicleAssignmentPanel extends BorderPane {
         }
     }
 
-    // ── Cancel Assign Panel ───────────────────────────────────────────────────
+   
     class CancelAssignPanel extends VBox {
         private int assignId;
         private Label lblAid=vl(),lblDrv=vl(),lblVeh=vl(),lblAdm=vl(),lblDt=vl(),lblSt=vl();
         private Label lblMsg=FxUtil.statusLabel();
+       
         CancelAssignPanel(){
         	lblMsg.setMaxWidth(Double.MAX_VALUE);
         	lblMsg.setAlignment(Pos.CENTER);
-            setBackground(Background.fill(Color.WHITE)); setAlignment(Pos.CENTER);
-            VBox card=new VBox(0); card.getStyleClass().add("card"); card.setMaxWidth(520);
+            setBackground(Background.fill(Color.WHITE)); 
+            setAlignment(Pos.CENTER);
+            
+            VBox card=new VBox(0); 
+            card.getStyleClass().add("card");
+            card.setMaxWidth(520);
+            
             Label title=new Label("Cancel Assignment");
             title.setStyle("-fx-font-weight:bold;-fx-font-size:20px;-fx-text-fill:#DC3545;");
-            title.setMaxWidth(Double.MAX_VALUE); title.setAlignment(Pos.CENTER);
-            GridPane grid=FxUtil.formGrid(); int y=0;
-            FxUtil.addInfoRow(grid,"Assignment ID:",lblAid,y++); FxUtil.addInfoRow(grid,"Driver:",lblDrv,y++);
-            FxUtil.addInfoRow(grid,"Vehicle:",lblVeh,y++); FxUtil.addInfoRow(grid,"Admin:",lblAdm,y++);
-            FxUtil.addInfoRow(grid,"Date Assigned:",lblDt,y++); FxUtil.addInfoRow(grid,"Status:",lblSt,y);
+            title.setMaxWidth(Double.MAX_VALUE); 
+            title.setAlignment(Pos.CENTER);
+            
+            GridPane grid=FxUtil.formGrid();
+            int y=0;
+            
+            FxUtil.addInfoRow(grid,"Assignment ID:",lblAid,y++); 
+            FxUtil.addInfoRow(grid,"Driver:",lblDrv,y++);
+            FxUtil.addInfoRow(grid,"Vehicle:",lblVeh,y++); 
+            FxUtil.addInfoRow(grid,"Admin:",lblAdm,y++);
+            FxUtil.addInfoRow(grid,"Date Assigned:",lblDt,y++);
+            FxUtil.addInfoRow(grid,"Status:",lblSt,y);
+            
             Label warn=new Label("Cancelling will set the assignment to Inactive\nand revert any Approved trips back to Pending.");
             warn.setStyle("-fx-font-style:italic;-fx-font-size:11px;-fx-text-fill:#B46400;");
             warn.setPadding(new Insets(8,0,8,0));
-            Button btnConfirm=FxUtil.btnDanger("Confirm Cancel"), btnBack=FxUtil.btnOutlinePrimary("Back");
-            btnConfirm.setOnAction(e->cancel()); btnBack.setOnAction(e->{cards.show("LIST");loadAssignments("All");});
-            HBox btnRow=new HBox(15,btnConfirm,btnBack); btnRow.setAlignment(Pos.CENTER); btnRow.setPadding(new Insets(16,0,0,0));
+            
+            Button btnConfirm=FxUtil.btnDanger("Confirm Cancel"),
+            		btnBack=FxUtil.btnOutlinePrimary("Back");
+            btnConfirm.setOnAction(e->cancel());
+            btnBack.setOnAction(e->{cards.show("LIST");
+            loadAssignments("All");});
+            
+            HBox btnRow=new HBox(15,btnConfirm,btnBack);
+            btnRow.setAlignment(Pos.CENTER);
+            btnRow.setPadding(new Insets(16,0,0,0));
             card.getChildren().addAll(title,FxUtil.spacer(20),grid,warn,btnRow,FxUtil.spacer(10),lblMsg);
             getChildren().add(card);
         }
         void setDetails(int id,String drv,String veh,String adm,String dt,String st){
-            assignId=id; lblAid.setText(String.valueOf(id)); lblDrv.setText(drv); lblVeh.setText(veh);
-            lblAdm.setText(adm); lblDt.setText(dt); lblSt.setText(st); lblMsg.setText(" ");
+            assignId=id; lblAid.setText(String.valueOf(id)); 
+            lblDrv.setText(drv);
+            lblVeh.setText(veh);
+            lblAdm.setText(adm); 
+            lblDt.setText(dt);
+            lblSt.setText(st); 
+            lblMsg.setText(" ");
         }
         private void cancel(){
-            if(!FxUtil.confirm(this,"Are you sure you want to cancel this assignment?\nApproved trips linked to it will revert to Pending.","Confirm Cancel"))return;
+            if(!FxUtil.confirm(this,"Are you sure you want to cancel this assignment?\nApproved trips linked to it will revert to Pending.","Confirm Cancel"))
+            	return;
             try{
                 conn.prepareStatement("UPDATE Vehicle_Assignment SET assignment_status='Inactive' WHERE assignment_id="+assignId).executeUpdate();
                 cascadeAssignmentInactive(assignId);
-                loadAssignments("All"); cards.show("LIST");
-            }catch(Exception e){FxUtil.setError(lblMsg,"Error cancelling assignment!");e.printStackTrace();}
+                loadAssignments("All");
+                cards.show("LIST");
+            }catch(Exception e){
+            	FxUtil.setError(lblMsg,"Error cancelling assignment!");
+            	e.printStackTrace();
+            }
         }
-        private Label vl(){Label l=new Label();l.getStyleClass().add("form-label");return l;}
+        private Label vl(){
+        	Label l=new Label();l.getStyleClass().add("form-label");
+        	return l;
+        }
     }
 }

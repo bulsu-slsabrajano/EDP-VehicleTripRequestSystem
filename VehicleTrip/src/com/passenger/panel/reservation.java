@@ -1,8 +1,10 @@
 package com.passenger.panel;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Time;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -59,7 +61,7 @@ public class reservation extends VBox {
     }
 
     private void buildUI() {
-        // ── Gradient header ────────────────────────────────────────────────
+       
         HBox header = new HBox();
         header.setAlignment(Pos.CENTER);
         header.setPadding(new Insets(20, 25, 20, 25));
@@ -70,7 +72,7 @@ public class reservation extends VBox {
         hTitle.setStyle("-fx-font-weight:bold;-fx-font-size:26px;-fx-text-fill:#1A2B6D;");
         header.getChildren().add(hTitle);
 
-        // ── Form card ─────────────────────────────────────────────────────
+        
         VBox card = new VBox(0);
         card.getStyleClass().add("card");
         card.setMaxWidth(640);
@@ -89,7 +91,7 @@ public class reservation extends VBox {
         GridPane.setColumnSpan(schedLbl, 2);
         form.add(schedLbl, 0, y++);
 
-        // ── DatePicker restrictions (no past dates) ───────────────────────
+        //no past dates
         dpStartDate.setDayCellFactory(picker -> new DateCell() {
             @Override
             public void updateItem(LocalDate date, boolean empty) {
@@ -121,7 +123,7 @@ public class reservation extends VBox {
                 dpEndDate.setValue(newVal);
             }
         });
-        // ─────────────────────────────────────────────────────────────────
+        
 
         dpStartDate.getStyleClass().add("date-field"); dpStartDate.setPrefWidth(260);
         dpEndDate.getStyleClass().add("date-field");   dpEndDate.setPrefWidth(260);
@@ -196,33 +198,33 @@ public class reservation extends VBox {
         });
     }
 
-    // ── Validation ────────────────────────────────────────────────────────────
+    //Validation
     private boolean validateDatesAndTimes() {
         LocalDate today     = LocalDate.now();
         LocalTime now       = LocalTime.now();
         LocalDate startDate = dpStartDate.getValue();
         LocalDate endDate   = dpEndDate.getValue();
 
-        // 1. Null check
+       
         if (startDate == null || endDate == null) {
             FxUtil.showError(this, "Please select valid Start and End dates.");
             return false;
         }
 
-        // 2. Start date must not be in the past
+        //Start date must not be in the past
         if (startDate.isBefore(today)) {
             FxUtil.showError(this, "Start date cannot be in the past.");
             return false;
         }
 
-        // 3. End date must not be before start date
+        //End date must not be before start date
         if (endDate.isBefore(startDate)) {
             FxUtil.showError(this, "End date cannot be before Start date.");
             return false;
         }
 
-        // 4. Parse times
-        java.sql.Time startTime, endTime;
+        //Parse times
+        	Time startTime, endTime;
         try {
             startTime = parseTime(txtStartTime.getText().trim());
             endTime   = parseTime(txtEndTime.getText().trim());
@@ -234,7 +236,7 @@ public class reservation extends VBox {
         LocalTime parsedStart = startTime.toLocalTime();
         LocalTime parsedEnd   = endTime.toLocalTime();
 
-        // 5. If booking is today, start time must not be in the past
+        //If booking is today, start time must not be in the past
         if (startDate.isEqual(today) && parsedStart.isBefore(now)) {
             FxUtil.showError(this,
                 "Start time cannot be in the past for today's booking.\n" +
@@ -243,7 +245,7 @@ public class reservation extends VBox {
             return false;
         }
 
-        // 6. If same day booking, end time must be after start time
+        //If same day booking, end time must be after start time
         if (startDate.isEqual(endDate) && !parsedEnd.isAfter(parsedStart)) {
             FxUtil.showError(this,
                 "End time must be after Start time on the same day.");
@@ -286,19 +288,19 @@ public class reservation extends VBox {
     }
 
     private void submitBooking() {
-        // ── Required field check ──────────────────────────────────────────
+        //Required field check
         if (txtPickup.getText().trim().isEmpty() || txtDestination.getText().trim().isEmpty()) {
             FxUtil.showError(this, "Pickup and Destination are required.");
             return;
         }
 
-        // ── Date & time validation (replaces the old null check + parseTime) ──
+        //Date & time validation
         if (!validateDatesAndTimes()) return;
 
-        // Safe to parse now
-        java.sql.Date startDate = java.sql.Date.valueOf(dpStartDate.getValue());
-        java.sql.Date endDate   = java.sql.Date.valueOf(dpEndDate.getValue());
-        java.sql.Time startTime, endTime;
+        
+        Date startDate = Date.valueOf(dpStartDate.getValue());
+        Date endDate   = Date.valueOf(dpEndDate.getValue());
+        Time startTime, endTime;
         try {
             startTime = parseTime(txtStartTime.getText().trim());
             endTime   = parseTime(txtEndTime.getText().trim());

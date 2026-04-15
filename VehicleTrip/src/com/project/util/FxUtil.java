@@ -14,24 +14,21 @@ import javafx.scene.text.FontWeight;
 
 import java.util.Optional;
 
-/**
- * Utility class that provides factory methods for common UI components,
- * replacing Swing JOptionPane, styled buttons, and TableView helpers.
- */
+
 public class FxUtil {
 
-    // ── CSS path ─────────────────────────────────────────────────────────────
+    // CSS path 
     public static final String CSS = FxUtil.class
             .getResource("/com/project/style/style.css").toExternalForm();
 
-    // ── Alerts (replaces JOptionPane) ────────────────────────────────────────
+    // Alerts (replaces JOptionPane)
 
     public static void showInfo(Node owner, String msg) {
         Alert a = new Alert(Alert.AlertType.INFORMATION, msg, ButtonType.OK);
         a.setHeaderText(null);
         
         if (owner != null && owner.getScene() != null) {
-            a.initOwner(owner.getScene().getWindow()); // ✅ CENTER FIX
+            a.initOwner(owner.getScene().getWindow()); 
         }
         
         a.showAndWait();
@@ -42,7 +39,7 @@ public class FxUtil {
         a.setHeaderText(null);
         
         if (owner != null && owner.getScene() != null) {
-            a.initOwner(owner.getScene().getWindow()); // ✅ CENTER FIX
+            a.initOwner(owner.getScene().getWindow()); 
         }
 
         
@@ -54,7 +51,7 @@ public class FxUtil {
         a.setHeaderText(null);
         
         if (owner != null && owner.getScene() != null) {
-            a.initOwner(owner.getScene().getWindow()); // ✅ CENTER FIX
+            a.initOwner(owner.getScene().getWindow()); 
         }
         
         a.showAndWait();
@@ -74,7 +71,7 @@ public class FxUtil {
         return r.isPresent() && r.get() == ButtonType.YES;
     }
 
-    /** Custom option dialog – returns index of chosen option (0-based), or -1. */
+    //Custom option dialog 
     public static int showOptions(Node owner, String msg, String title, String... options) {
         Alert a = new Alert(Alert.AlertType.CONFIRMATION);
         a.setTitle(title);
@@ -90,7 +87,7 @@ public class FxUtil {
         return -1;
     }
 
-    // ── Buttons ───────────────────────────────────────────────────────────────
+    // Buttons 
 
     public static Button btnPrimary(String text) {
         Button b = new Button(text);
@@ -134,7 +131,7 @@ public class FxUtil {
         return b;
     }
 
-    // ── Form helpers ──────────────────────────────────────────────────────────
+    //Form helpers
 
     public static TextField styledField() {
         TextField f = new TextField();
@@ -181,7 +178,7 @@ public class FxUtil {
         return c;
     }
 
-    // ── Status label ──────────────────────────────────────────────────────────
+    //tatus label 
 
     public static Label statusLabel() {
         Label l = new Label(" ");
@@ -201,7 +198,7 @@ public class FxUtil {
         l.setText(msg);
     }
 
-    // ── Layout helpers ────────────────────────────────────────────────────────
+    //Layout helpers
 
     public static Region spacer(double h) {
         Region r = new Region();
@@ -231,12 +228,7 @@ public class FxUtil {
         return r;
     }
 
-    // ── TableView helpers ─────────────────────────────────────────────────────
-
-    /**
-     * Creates a TableView<Object[]> with columns built from the given header strings.
-     * Each column retrieves data[colIndex] via cell value factory.
-     */
+    
     @SuppressWarnings("unchecked")
     public static TableView<Object[]> buildTable(String... headers) {
         TableView<Object[]> table = new TableView<>();
@@ -258,7 +250,7 @@ public class FxUtil {
         return data;
     }
 
-    /** Wraps a TableView in a styled ScrollPane. */
+    // Wraps a TableView in a styled ScrollPane
     public static ScrollPane tableScroll(TableView<?> table) {
         ScrollPane sp = new ScrollPane(table);
         sp.setFitToWidth(true);
@@ -268,10 +260,7 @@ public class FxUtil {
         return sp;
     }
 
-    /**
-     * Applies a CSS cell-renderer for the status column at index {@code col}.
-     * Colouring mirrors the Swing StatusRenderer and custom renderers.
-     */
+    
     public static void applyStatusRenderer(TableView<Object[]> table, int col) {
         TableColumn<Object[], Object> c = (TableColumn<Object[], Object>) table.getColumns().get(col);
         c.setCellFactory(tc -> new TableCell<>() {
@@ -297,7 +286,7 @@ public class FxUtil {
         });
     }
 
-    // ── Form row helper (GridPane) ────────────────────────────────────────────
+ 
 
     public static void addFormRow(GridPane grid, String labelText, Node field, int row) {
         Label lbl = formLabel(labelText);
@@ -315,7 +304,7 @@ public class FxUtil {
         GridPane.setMargin(value, new Insets(6, 10, 6, 10));
     }
 
-    /** Creates a standard GridPane for forms. */
+    // Creates a standard GridPane for forms
     public static GridPane formGrid() {
         GridPane g = new GridPane();
         g.setBackground(Background.fill(Color.WHITE));

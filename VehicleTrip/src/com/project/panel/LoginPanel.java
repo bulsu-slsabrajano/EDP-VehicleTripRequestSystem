@@ -34,7 +34,7 @@ public class LoginPanel extends HBox {
         setBackground(Background.fill(Color.WHITE));
         setPrefSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE);
 
-        // ── Left brand pane ──────────────────────────────────────────────────
+        //Left pane
         StackPane brandPane = new StackPane();
         brandPane.getStyleClass().add("gradient-panel");
         brandPane.setPrefWidth(700);
@@ -64,7 +64,7 @@ public class LoginPanel extends HBox {
         brandContent.getChildren().addAll(logo, welcomeLbl, brandName, subLbl);
         brandPane.getChildren().add(brandContent);
 
-        // ── Right login form ─────────────────────────────────────────────────
+        //Right login form 
         VBox formPane = new VBox(0);
         formPane.getStyleClass().add("login-panel");
         formPane.setAlignment(Pos.CENTER);

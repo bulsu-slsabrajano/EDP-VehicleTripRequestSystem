@@ -36,7 +36,7 @@ public class VehiclePanel extends VBox {
         Label title = new Label("Vehicle");
         title.setStyle("-fx-font-weight:bold;-fx-font-size:26px;-fx-text-fill:#1A2B6D;");
 
-        // ── Dropdown filter ───────────────────────────────────────────────────
+      
         vehicleDropdown = new ComboBox<>(FXCollections.observableArrayList("All Types"));
         vehicleDropdown.getStyleClass().add("combo-field");
         vehicleDropdown.setPrefWidth(200);
@@ -66,7 +66,7 @@ public class VehiclePanel extends VBox {
             new Label("Filter by Vehicle Type:"), vehicleDropdown);
         filterBar.setAlignment(Pos.CENTER_LEFT);
 
-        // ── Table ─────────────────────────────────────────────────────────────
+       
         vehicleTable = FxUtil.buildTable(
             "Vehicle ID", "Model", "Plate", "Type", "Capacity", "Status");
         FxUtil.applyStatusRenderer(vehicleTable, 5);

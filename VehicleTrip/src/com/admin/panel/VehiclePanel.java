@@ -3,6 +3,8 @@ package com.admin.panel;
 import com.project.dbConnection.DbConnectMsSql;
 import com.project.util.CardPane;
 import com.project.util.FxUtil;
+
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -45,7 +47,7 @@ public class VehiclePanel extends BorderPane {
         loadVehicles("All");
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+  
     private BorderPane buildListPanel() {
         BorderPane main = new BorderPane();
         main.setBackground(Background.fill(Color.WHITE));
@@ -117,9 +119,11 @@ public class VehiclePanel extends BorderPane {
                 ? "SELECT vehicle_id,vehicle_model,plate_number,vehicle_type,passenger_capacity,vehicle_status FROM Vehicle"
                 : "SELECT vehicle_id,vehicle_model,plate_number,vehicle_type,passenger_capacity,vehicle_status FROM Vehicle WHERE vehicle_status=?";
             PreparedStatement ps = conn.prepareStatement(sql);
-            if (!"All".equals(filter)) ps.setString(1, filter);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
+            if (!"All".equals(filter)) 
+            	ps.setString(1, filter);
+            	ResultSet rs = ps.executeQuery();
+           
+            	while (rs.next()) {
                 tableData.add(new Object[]{
                     rs.getInt("vehicle_id"), rs.getString("vehicle_model"),
                     rs.getString("plate_number"), rs.getString("vehicle_type"),
@@ -135,6 +139,7 @@ public class VehiclePanel extends BorderPane {
         psFind.setInt(1, vehicleId);
         ResultSet rs = psFind.executeQuery();
         List<Integer> ids = new ArrayList<>();
+        
         while (rs.next()) ids.add(rs.getInt("assignment_id"));
         for (int aId : ids) {
             conn.prepareStatement("UPDATE Vehicle_Assignment SET assignment_status='Inactive' WHERE assignment_id=" + aId).executeUpdate();
@@ -142,14 +147,14 @@ public class VehiclePanel extends BorderPane {
         }
     }
 
-    // ── Add Vehicle ───────────────────────────────────────────────────────────
+    //Add Vehicle
     class AddVehiclePanel extends VBox {
         private final TextField txtModel    = FxUtil.styledField();
         private final TextField txtPlate    = FxUtil.styledField();
         private final TextField txtType     = FxUtil.styledField();
         private final TextField txtCapacity = FxUtil.styledField();
         private final ComboBox<String> cmbStatus = FxUtil.styledCombo(
-            javafx.collections.FXCollections.observableArrayList("Available","Not Available"));
+            FXCollections.observableArrayList("Available","Not Available"));
         private final Label lblStatus = FxUtil.statusLabel();
 
         AddVehiclePanel() {
@@ -179,7 +184,9 @@ public class VehiclePanel extends BorderPane {
             Button btnAdd  = FxUtil.btnPrimary("Add");
             Button btnBack = FxUtil.btnOutlinePrimary("Back");
             btnAdd.setOnAction(e -> save());
-            btnBack.setOnAction(e -> { clear(); cards.show("LIST"); loadVehicles("All"); });
+            btnBack.setOnAction(e -> { clear();
+            cards.show("LIST"); 
+            loadVehicles("All"); });
 
             HBox btnRow = new HBox(15, btnAdd, btnBack);
             btnRow.setAlignment(Pos.CENTER);
@@ -192,30 +199,50 @@ public class VehiclePanel extends BorderPane {
         private void save() {
             String model = txtModel.getText().trim(), plate = txtPlate.getText().trim();
             String type  = txtType.getText().trim(),  cap   = txtCapacity.getText().trim();
+         
             if (model.isEmpty()||plate.isEmpty()||type.isEmpty()||cap.isEmpty()) {
                 FxUtil.setError(lblStatus,"All fields required!"); return; }
+           
             int capacity;
-            try { capacity = Integer.parseInt(cap); if (capacity<=0) throw new Exception(); }
-            catch (Exception e) { FxUtil.setError(lblStatus,"Capacity must be a positive number!"); return; }
+            try { 
+            	capacity = Integer.parseInt(cap); if (capacity<=0) 
+            	throw new Exception(); 
+            }
+            catch (Exception e) { 
+            	FxUtil.setError(lblStatus,"Capacity must be a positive number!");
+            	return; 
+            }
             try {
                 PreparedStatement chk = conn.prepareStatement("SELECT COUNT(*) FROM Vehicle WHERE plate_number=?");
                 chk.setString(1, plate);
                 ResultSet rc = chk.executeQuery();
-                if (rc.next() && rc.getInt(1) > 0) { FxUtil.setError(lblStatus,"Plate number already exists!"); return; }
+                if (rc.next() && rc.getInt(1) > 0) { 
+                	FxUtil.setError(lblStatus,"Plate number already exists!");
+                	return; 
+                }
+                
                 PreparedStatement ps = conn.prepareStatement(
                     "INSERT INTO Vehicle (vehicle_model,plate_number,vehicle_type,passenger_capacity,vehicle_status) VALUES (?,?,?,?,?)",
                     Statement.RETURN_GENERATED_KEYS);
-                ps.setString(1,model); ps.setString(2,plate); ps.setString(3,type);
-                ps.setInt(4,capacity); ps.setString(5,cmbStatus.getValue());
+                ps.setString(1,model); 
+                ps.setString(2,plate);
+                ps.setString(3,type);
+                ps.setInt(4,capacity);
+                ps.setString(5,cmbStatus.getValue());
                 ps.executeUpdate();
                 FxUtil.setSuccess(lblStatus,"Vehicle added successfully!");
-                clear(); loadVehicles("All");
-            } catch (Exception e) { FxUtil.setError(lblStatus,"Error adding vehicle!"); e.printStackTrace(); }
+                clear();
+                loadVehicles("All");
+            } catch (Exception e) { 
+            	FxUtil.setError(lblStatus,"Error adding vehicle!"); 
+            	e.printStackTrace(); 
+            }
         }
+        
         private void clear() { txtModel.clear();txtPlate.clear();txtType.clear();txtCapacity.clear(); }
     }
 
-    // ── Update Vehicle ────────────────────────────────────────────────────────
+    //Update Vehicle
     class UpdateVehiclePanel extends VBox {
         private int vehicleId; private String prevStatus="", origPlate="";
         private final TextField txtModel    = FxUtil.styledField();
@@ -223,7 +250,7 @@ public class VehiclePanel extends BorderPane {
         private final TextField txtType     = FxUtil.styledField();
         private final TextField txtCapacity = FxUtil.styledField();
         private final ComboBox<String> cmbStatus = FxUtil.styledCombo(
-            javafx.collections.FXCollections.observableArrayList("Available","Not Available"));
+            FXCollections.observableArrayList("Available","Not Available"));
         private final Label lblStatus = FxUtil.statusLabel();
 
         UpdateVehiclePanel() {
@@ -232,12 +259,16 @@ public class VehiclePanel extends BorderPane {
             setBackground(Background.fill(Color.WHITE));
             setAlignment(Pos.CENTER);
             cmbStatus.setValue("Available");
+            
             VBox card = new VBox(0);
             card.getStyleClass().add("card");
             card.setMaxWidth(520);
+           
             Label title = new Label("Update Vehicle");
             title.getStyleClass().add("title-medium");
-            title.setMaxWidth(Double.MAX_VALUE); title.setAlignment(Pos.CENTER);
+            title.setMaxWidth(Double.MAX_VALUE); 
+            title.setAlignment(Pos.CENTER);
+          
             GridPane form = FxUtil.formGrid();
             int y=0;
             FxUtil.addFormRow(form,"Model:",    txtModel,   y++);
@@ -245,40 +276,72 @@ public class VehiclePanel extends BorderPane {
             FxUtil.addFormRow(form,"Type:",     txtType,    y++);
             FxUtil.addFormRow(form,"Capacity:", txtCapacity,y++);
             FxUtil.addFormRow(form,"Status:",   cmbStatus,  y);
+            
             Button btnUpd = FxUtil.btnPrimary("Update");
             Button btnBack= FxUtil.btnOutlinePrimary("Back");
             btnUpd.setOnAction(e->update());
-            btnBack.setOnAction(e->{lblStatus.setText(" ");cards.show("LIST");loadVehicles("All");});
+            btnBack.setOnAction(e->{lblStatus.setText(" ");
+	            cards.show("LIST");
+	            loadVehicles("All");
+            });
+            
             HBox btnRow = new HBox(15,btnUpd,btnBack);
-            btnRow.setAlignment(Pos.CENTER); btnRow.setPadding(new Insets(20,0,0,0));
+            btnRow.setAlignment(Pos.CENTER); 
+            btnRow.setPadding(new Insets(20,0,0,0));
             card.getChildren().addAll(title,FxUtil.spacer(20),form,btnRow,FxUtil.spacer(10),lblStatus);
             getChildren().add(card);
         }
+        
         void setData(int id,String model,String plate,String type,int cap,String status){
-            vehicleId=id; prevStatus=status!=null?status:"Available"; origPlate=plate!=null?plate:"";
-            txtModel.setText(model); txtPlate.setText(plate); txtType.setText(type);
-            txtCapacity.setText(String.valueOf(cap)); cmbStatus.setValue(status); lblStatus.setText(" ");
+            vehicleId=id; prevStatus=status!=null?status:"Available";
+            origPlate=plate!=null?plate:"";
+            txtModel.setText(model);
+            txtPlate.setText(plate); 
+            txtType.setText(type);
+            txtCapacity.setText(String.valueOf(cap));
+            cmbStatus.setValue(status);
+            lblStatus.setText(" ");
         }
+        
         private void update(){
             String model=txtModel.getText().trim(),plate=txtPlate.getText().trim();
             String type=txtType.getText().trim(),cap=txtCapacity.getText().trim();
             String newStatus=cmbStatus.getValue();
             if(model.isEmpty()||plate.isEmpty()||type.isEmpty()||cap.isEmpty()){
                 FxUtil.setError(lblStatus,"All fields required!"); return;}
+           
             int capacity;
-            try{capacity=Integer.parseInt(cap);if(capacity<=0)throw new Exception();}
-            catch(Exception e){FxUtil.setError(lblStatus,"Capacity must be positive!");return;}
+            try{
+            	capacity=Integer.parseInt(cap);
+            	if(capacity<=0)
+            	throw new Exception();
+            }
+            catch(Exception e){
+            	FxUtil.setError(lblStatus,"Capacity must be positive!");
+            	return;
+            }
             try{
                 PreparedStatement chk=conn.prepareStatement(
                     "SELECT COUNT(*) FROM Vehicle WHERE plate_number=? AND vehicle_id<>?");
-                chk.setString(1,plate);chk.setInt(2,vehicleId);
+                chk.setString(1,plate);
+                chk.setInt(2,vehicleId);
                 ResultSet rc=chk.executeQuery();
-                if(rc.next()&&rc.getInt(1)>0){FxUtil.setError(lblStatus,"Plate already exists!");return;}
+                
+                if(rc.next()&&rc.getInt(1)>0){
+                	FxUtil.setError(lblStatus,"Plate already exists!");
+                	return;
+                }
+                
                 PreparedStatement ps=conn.prepareStatement(
                     "UPDATE Vehicle SET vehicle_model=?,plate_number=?,vehicle_type=?,passenger_capacity=?,vehicle_status=? WHERE vehicle_id=?");
-                ps.setString(1,model);ps.setString(2,plate);ps.setString(3,type);
-                ps.setInt(4,capacity);ps.setString(5,newStatus);ps.setInt(6,vehicleId);
+                ps.setString(1,model);
+                ps.setString(2,plate);
+                ps.setString(3,type);
+                ps.setInt(4,capacity);
+                ps.setString(5,newStatus);
+                ps.setInt(6,vehicleId);
                 ps.executeUpdate();
+                
                 if("Available".equalsIgnoreCase(prevStatus)&&"Not Available".equalsIgnoreCase(newStatus))
                     cascadeVehicleUnavailable(vehicleId);
                 prevStatus=newStatus; origPlate=plate;
@@ -288,7 +351,7 @@ public class VehiclePanel extends BorderPane {
         }
     }
 
-    // ── Make Unavailable ──────────────────────────────────────────────────────
+    //Make Unavailable
     class MakeUnavailablePanel extends VBox {
         private int vid;
         private final Label lblVid=valueLbl(),lblModel=valueLbl(),lblPlate=valueLbl();
@@ -298,11 +361,17 @@ public class VehiclePanel extends BorderPane {
         MakeUnavailablePanel(){
         	lblMsg.setMaxWidth(Double.MAX_VALUE);
         	lblMsg.setAlignment(Pos.CENTER);
-            setBackground(Background.fill(Color.WHITE)); setAlignment(Pos.CENTER);
-            VBox card=new VBox(0); card.getStyleClass().add("card"); card.setMaxWidth(520);
+            setBackground(Background.fill(Color.WHITE));
+            setAlignment(Pos.CENTER);
+           
+            VBox card=new VBox(0); card.getStyleClass().add("card"); 
+            card.setMaxWidth(520);
+            
             Label title=new Label("Make Vehicle Unavailable");
             title.setStyle("-fx-font-weight:bold;-fx-font-size:20px;-fx-text-fill:#DC3545;");
-            title.setMaxWidth(Double.MAX_VALUE); title.setAlignment(Pos.CENTER);
+            title.setMaxWidth(Double.MAX_VALUE);
+            title.setAlignment(Pos.CENTER);
+            
             GridPane grid=FxUtil.formGrid(); int y=0;
             FxUtil.addInfoRow(grid,"Vehicle ID:",lblVid,   y++);
             FxUtil.addInfoRow(grid,"Model:",     lblModel, y++);
@@ -310,13 +379,17 @@ public class VehiclePanel extends BorderPane {
             FxUtil.addInfoRow(grid,"Type:",      lblType,  y++);
             FxUtil.addInfoRow(grid,"Capacity:",  lblCap,   y++);
             FxUtil.addInfoRow(grid,"Status:",    lblStat,  y);
+           
             Label warn=new Label("This will also set related active assignments to Inactive\nand revert any Approved trips back to Pending.");
             warn.setStyle("-fx-font-style:italic;-fx-font-size:11px;-fx-text-fill:#B46400;");
             warn.setPadding(new Insets(8,0,8,0));
+            
             Button btnConfirm=FxUtil.btnDanger("Confirm");
             Button btnBack=FxUtil.btnOutlinePrimary("Back");
+            
             btnConfirm.setOnAction(e->makeUnavailable());
             btnBack.setOnAction(e->{cards.show("LIST");loadVehicles("All");});
+           
             HBox btnRow=new HBox(15,btnConfirm,btnBack);
             btnRow.setAlignment(Pos.CENTER); btnRow.setPadding(new Insets(16,0,0,0));
             card.getChildren().addAll(title,FxUtil.spacer(20),grid,warn,btnRow,FxUtil.spacer(10),lblMsg);
@@ -335,6 +408,9 @@ public class VehiclePanel extends BorderPane {
                 loadVehicles("All"); cards.show("LIST");
             }catch(Exception e){FxUtil.setError(lblMsg,"Error updating vehicle!");e.printStackTrace();}
         }
-        private Label valueLbl(){Label l=new Label();l.getStyleClass().add("form-label");return l;}
+        private Label valueLbl(){
+        	Label l=new Label();l.getStyleClass().add("form-label");
+        	return l;
+        }
     }
 }

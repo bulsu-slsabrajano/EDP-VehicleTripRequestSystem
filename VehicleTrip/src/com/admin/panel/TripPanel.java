@@ -93,29 +93,47 @@ public class TripPanel extends BorderPane {
 
         btnView.setOnAction(e -> {
             int idx = table.getSelectionModel().getSelectedIndex();
-            if (idx < 0) { FxUtil.showInfo(this,"Select a trip first!"); return; }
+            
+            if (idx < 0) { FxUtil.showInfo(this,"Select a trip first!"); 
+            return; }
+            
             viewPanel.load(tripIds.get(idx)); cards.show("VIEW");
         });
         btnCreate.setOnAction(e -> { createPanel.resetFields(); cards.show("CREATE"); });
         btnUpdate.setOnAction(e -> {
             int idx = table.getSelectionModel().getSelectedIndex();
-            if (idx < 0) { FxUtil.showInfo(this,"Select a trip first!"); return; }
+            
+            if (idx < 0) { FxUtil.showInfo(this,"Select a trip first!"); 
+            return; }
+            
             updatePanel.load(tripIds.get(idx)); cards.show("UPDATE");
         });
         btnApprove.setOnAction(e -> {
             int idx = table.getSelectionModel().getSelectedIndex();
-            if (idx < 0) { FxUtil.showInfo(this,"Select a trip first!"); return; }
+           
+            if (idx < 0) { FxUtil.showInfo(this,"Select a trip first!"); 
+            return; }
+            
             Object[] row = tableData.get(idx);
-            if (!"Pending".equalsIgnoreCase((String)row[11])) { FxUtil.showInfo(this,"Only Pending trips can be approved."); return; }
+            
+            if (!"Pending".equalsIgnoreCase((String)row[11])) { FxUtil.showInfo(this,"Only Pending trips can be approved."); 
+            return; }
+           
             Object av = row[3];
             if (av == null || av.toString().equals("—") || av.toString().isEmpty()) {
-                FxUtil.showWarning(this,"This trip has no assignment yet.\nPlease update it first."); return; }
+                FxUtil.showWarning(this,"This trip has no assignment yet.\nPlease update it first."); 
+                return; }
             updateStatus(tripIds.get(idx), "Approved");
         });
         btnReject.setOnAction(e -> {
             int idx = table.getSelectionModel().getSelectedIndex();
-            if (idx < 0) { FxUtil.showInfo(this,"Select a trip first!"); return; }
-            if (!"Pending".equalsIgnoreCase((String)tableData.get(idx)[11])) { FxUtil.showInfo(this,"Only Pending trips can be rejected."); return; }
+            
+            if (idx < 0) { FxUtil.showInfo(this,"Select a trip first!"); 
+            return; }
+           
+            if (!"Pending".equalsIgnoreCase((String)tableData.get(idx)[11])) { FxUtil.showInfo(this,"Only Pending trips can be rejected."); 
+            return; }
+            
             if (FxUtil.confirm(this,"Reject this trip? It will be marked as Cancelled.","Confirm Reject"))
                 updateStatus(tripIds.get(idx), "Cancelled");
         });
@@ -224,8 +242,10 @@ public class TripPanel extends BorderPane {
             FxUtil.addInfoRow(grid,"Status:",   lStatus,y);
            
             Button btnBack=FxUtil.btnOutlinePrimary("Back");
-            btnBack.setOnAction(e->{cards.show("LIST");loadTrips("All");});
-            HBox btnRow=new HBox(btnBack); btnRow.setAlignment(Pos.CENTER); btnRow.setPadding(new Insets(20,0,0,0));
+            btnBack.setOnAction(e->{cards.show("LIST");
+            loadTrips("All");});
+            HBox btnRow=new HBox(btnBack); btnRow.setAlignment(Pos.CENTER); 
+            btnRow.setPadding(new Insets(20,0,0,0));
             card.getChildren().addAll(title,FxUtil.spacer(20),grid,btnRow);
             getChildren().add(card);
         }
@@ -277,28 +297,49 @@ public class TripPanel extends BorderPane {
         CreateTripPanel(){
         	lblStatus.setMaxWidth(Double.MAX_VALUE);
         	lblStatus.setAlignment(Pos.CENTER);
-            setBackground(Background.fill(Color.WHITE)); setAlignment(Pos.CENTER);
+            setBackground(Background.fill(Color.WHITE)); 
+            setAlignment(Pos.CENTER);
+            
             cmbStatus.setValue("Pending");
-            cmbPass.getStyleClass().add("combo-field"); cmbPass.setPrefWidth(260);
-            cmbAss.getStyleClass().add("combo-field"); cmbAss.setPrefWidth(260);
-            VBox card=new VBox(0); card.getStyleClass().add("card"); card.setMaxWidth(560);
-            Label title=new Label("Create Trip"); title.getStyleClass().add("title-medium");
-            title.setMaxWidth(Double.MAX_VALUE); title.setAlignment(Pos.CENTER);
+            cmbPass.getStyleClass().add("combo-field"); 
+            cmbPass.setPrefWidth(260);
+            cmbAss.getStyleClass().add("combo-field"); 
+            cmbAss.setPrefWidth(260);
+            
+            VBox card=new VBox(0); card.getStyleClass().add("card"); 
+            card.setMaxWidth(560);
+            
+            Label title=new Label("Create Trip"); 
+            title.getStyleClass().add("title-medium");
+            title.setMaxWidth(Double.MAX_VALUE); 
+            title.setAlignment(Pos.CENTER);
+            
             GridPane form=FxUtil.formGrid(); int y=0;
-            FxUtil.addFormRow(form,"Passenger:",  cmbPass, y++); FxUtil.addFormRow(form,"Admin:",     txtAdmin,y++);
-            FxUtil.addFormRow(form,"Start Date:", txtSd,   y++); FxUtil.addFormRow(form,"Start Time:",txtSt,  y++);
-            FxUtil.addFormRow(form,"End Date:",   txtEd,   y++); FxUtil.addFormRow(form,"End Time:",  txtEt,  y++);
-            FxUtil.addFormRow(form,"Assignment:", cmbAss,  y++); FxUtil.addFormRow(form,"Pickup:",    txtPk,  y++);
-            FxUtil.addFormRow(form,"Destination:",txtDst,  y++); FxUtil.addFormRow(form,"Pax Count:", txtPax, y++);
+            FxUtil.addFormRow(form,"Passenger:",  cmbPass, y++); 
+            FxUtil.addFormRow(form,"Admin:",     txtAdmin,y++);
+            FxUtil.addFormRow(form,"Start Date:", txtSd,   y++); 
+            FxUtil.addFormRow(form,"Start Time:",txtSt,  y++);
+            FxUtil.addFormRow(form,"End Date:",   txtEd,   y++); 
+            FxUtil.addFormRow(form,"End Time:",  txtEt,  y++);
+            FxUtil.addFormRow(form,"Assignment:", cmbAss,  y++); 
+            FxUtil.addFormRow(form,"Pickup:",    txtPk,  y++);
+            FxUtil.addFormRow(form,"Destination:",txtDst,  y++); 
+            FxUtil.addFormRow(form,"Pax Count:", txtPax, y++);
             FxUtil.addFormRow(form,"Status:",     cmbStatus,y);
+            
             Label hint=new Label("* Enter dates first, then click Check to see available assignments.");
             hint.setStyle("-fx-font-style:italic;-fx-font-size:11px;-fx-text-fill:#888;");
+            
             Button btnCheck=FxUtil.btnOutlinePrimary("Check Available Assignments");
             btnCheck.setOnAction(e->checkAvailability());
             Button btnSave=FxUtil.btnPrimary("Save"), btnBack=FxUtil.btnOutlinePrimary("Back");
-            btnSave.setOnAction(e->save()); btnBack.setOnAction(e->{cards.show("LIST");loadTrips("All");});
-            HBox btnRow=new HBox(15,btnSave,btnBack); btnRow.setAlignment(Pos.CENTER); btnRow.setPadding(new Insets(15,0,0,0));
+            btnSave.setOnAction(e->save()); 
+            btnBack.setOnAction(e->{cards.show("LIST");loadTrips("All");});
+            
+            HBox btnRow=new HBox(15,btnSave,btnBack); btnRow.setAlignment(Pos.CENTER); 
+            btnRow.setPadding(new Insets(15,0,0,0));
             card.getChildren().addAll(title,FxUtil.spacer(20),form,FxUtil.spacer(6),hint,FxUtil.spacer(8),btnCheck,FxUtil.spacer(14),btnRow,FxUtil.spacer(10),lblStatus);
+            
             VBox wrapper = new VBox(card);
             wrapper.setAlignment(Pos.CENTER);
 
@@ -311,31 +352,67 @@ public class TripPanel extends BorderPane {
         }
         public void setAdminId(int id){}
         void resetFields(){
-            loadPassengers(); cmbAss.getItems().clear();
-            assignmentIds=new int[0]; assignCaps=new int[0];
-            txtSd.clear(); txtSt.setText("HH:MM"); txtEd.clear(); txtEt.setText("HH:MM");
-            txtPk.clear(); txtDst.clear(); txtPax.clear(); cmbStatus.setValue("Pending");
-            lblStatus.setText(" "); txtAdmin.setText(loggedInAdminName);
+            loadPassengers(); 
+            cmbAss.getItems().clear();
+            assignmentIds=new int[0]; 
+            assignCaps=new int[0];
+            txtSd.clear(); txtSt.setText("HH:MM"); 
+            txtEd.clear(); txtEt.setText("HH:MM");
+            txtPk.clear(); txtDst.clear(); 
+            txtPax.clear(); cmbStatus.setValue("Pending");
+            lblStatus.setText(" "); 
+            txtAdmin.setText(loggedInAdminName);
         }
+
         private void loadPassengers(){
             try{
-                cmbPass.getItems().clear(); List<Integer> ids=new ArrayList<>();
+                cmbPass.getItems().clear(); 
+                List<Integer> ids=new ArrayList<>();
                 PreparedStatement ps=conn.prepareStatement("SELECT p.passenger_id, u.first_name+' '+u.last_name AS name FROM Passenger p JOIN Users u ON p.passenger_id=u.user_id WHERE u.user_status='Active'");
                 ResultSet rs=ps.executeQuery();
-                while(rs.next()){cmbPass.getItems().add(rs.getString("name"));ids.add(rs.getInt("passenger_id"));}
+                
+                while(rs.next())
+                {cmbPass.getItems().add(rs.getString("name"));
+                ids.add(rs.getInt("passenger_id"));
+                }
+             
                 passengerIds=ids.stream().mapToInt(i->i).toArray();
             }catch(Exception e){e.printStackTrace();}
         }
         private void checkAvailability(){
             java.sql.Date s,e2;
-            try{s=java.sql.Date.valueOf(txtSd.getText().trim());}
-            catch(Exception ex){FxUtil.setError(lblStatus,"Invalid start date! Use yyyy-MM-dd");return;}
+           
+            try{
+            	s=java.sql.Date.valueOf(txtSd.getText().trim());
+            }
+           
+            catch(Exception ex){
+            	FxUtil.setError(lblStatus,"Invalid start date! Use yyyy-MM-dd");
+            	return;
+            }
+            
             try{e2=java.sql.Date.valueOf(txtEd.getText().trim());}
-            catch(Exception ex){FxUtil.setError(lblStatus,"Invalid end date! Use yyyy-MM-dd");return;}
-            if(!s.toLocalDate().isAfter(LocalDate.now().minusDays(1))){FxUtil.setError(lblStatus,"Start date cannot be in the past!");return;}
-            if(e2.before(s)){FxUtil.setError(lblStatus,"End date must be after start date!");return;}
+            catch(Exception ex){
+            	FxUtil.setError(lblStatus,"Invalid end date! Use yyyy-MM-dd");
+            	return;
+            }
+            
+            if(!s.toLocalDate().isAfter(LocalDate.now().minusDays(1))){
+            	FxUtil.setError(lblStatus,"Start date cannot be in the past!");
+            	return;
+            }
+            
+            if(e2.before(s)){
+            	FxUtil.setError(lblStatus,"End date must be after start date!");
+            	return;
+            	}
             List<Integer> avail=availableAssignments(s,e2,-1);
-            if(avail.isEmpty()){FxUtil.setError(lblStatus,"No available assignments for these dates!");cmbAss.getItems().clear();return;}
+            if(avail.isEmpty()){
+            	FxUtil.setError(lblStatus,"No available assignments for these dates!");
+            	cmbAss.getItems().clear();
+            	return;
+            }
+           
             try{
                 cmbAss.getItems().clear(); List<Integer> aIds=new ArrayList<>(), caps=new ArrayList<>();
                 for(int aId:avail){
@@ -346,47 +423,122 @@ public class TripPanel extends BorderPane {
                     ps.setInt(1,aId); ResultSet rs=ps.executeQuery();
                     if(rs.next()){cmbAss.getItems().add(rs.getString("label")+" (Cap: "+rs.getInt("passenger_capacity")+")");aIds.add(aId);caps.add(rs.getInt("passenger_capacity"));}
                 }
+                
                 assignmentIds=aIds.stream().mapToInt(i->i).toArray();
                 assignCaps=caps.stream().mapToInt(i->i).toArray();
                 FxUtil.setSuccess(lblStatus,aIds.size()+" assignment(s) available.");
-            }catch(Exception ex){ex.printStackTrace();}
+            }catch(Exception ex){
+            	ex.printStackTrace();
+            }
         }
-        private java.sql.Time parseTime(String s) throws Exception{if(s.matches("\\d{2}:\\d{2}"))s+=":00";
-        return java.sql.Time.valueOf(s);}
+        private Time parseTime(String s) throws Exception{if(s.matches("\\d{2}:\\d{2}"))s+=":00";
+        	return Time.valueOf(s);}
         
         private void save(){
-            if(loggedInAdminId<=0){FxUtil.setError(lblStatus,"No logged-in admin!");return;}
-            if(passengerIds.length==0){FxUtil.setError(lblStatus,"No passengers available!");return;}
-            if(assignmentIds.length==0){FxUtil.setError(lblStatus,"Run Check Available Assignments first!");return;}
-            if(txtPk.getText().trim().isEmpty()){FxUtil.setError(lblStatus,"Pickup required!");return;}
-            if(txtDst.getText().trim().isEmpty()){FxUtil.setError(lblStatus,"Destination required!");return;}
-            java.sql.Date sd,ed; java.sql.Time st,et;
-            try{sd=java.sql.Date.valueOf(txtSd.getText().trim());}catch(Exception ex){FxUtil.setError(lblStatus,"Invalid start date!");return;}
-            try{ed=java.sql.Date.valueOf(txtEd.getText().trim());}catch(Exception ex){FxUtil.setError(lblStatus,"Invalid end date!");return;}
-            if(!sd.toLocalDate().isAfter(LocalDate.now().minusDays(1))){FxUtil.setError(lblStatus,"Start date cannot be in the past!");return;}
-            if(ed.before(sd)){FxUtil.setError(lblStatus,"End date must be after start date!");return;}
-            try{st=parseTime(txtSt.getText().trim());}catch(Exception ex){FxUtil.setError(lblStatus,"Invalid start time! Use HH:MM");return;}
-            try{et=parseTime(txtEt.getText().trim());}catch(Exception ex){FxUtil.setError(lblStatus,"Invalid end time! Use HH:MM");return;}
-            int pax; try{pax=Integer.parseInt(txtPax.getText().trim());if(pax<=0)throw new Exception();}
-            catch(Exception ex){FxUtil.setError(lblStatus,"Pax count must be a positive number!");return;}
+            if(loggedInAdminId<=0){
+            	FxUtil.setError(lblStatus,"No logged-in admin!");
+            	return;
+            }
+            if(passengerIds.length==0){
+            	FxUtil.setError(lblStatus,"No passengers available!");
+            	return;
+            }
+            if(assignmentIds.length==0){
+            	FxUtil.setError(lblStatus,"Run Check Available Assignments first!");
+            	return;
+            }
+            if(txtPk.getText().trim().isEmpty()){
+            	FxUtil.setError(lblStatus,"Pickup required!");
+            	return;
+            }
+            if(txtDst.getText().trim().isEmpty()){
+            	FxUtil.setError(lblStatus,"Destination required!");
+           		return;
+            }
+            
+            Date sd,ed; Time st,et;
+            try{
+            	sd=Date.valueOf(txtSd.getText().trim());
+            }
+            catch(Exception ex){
+            	FxUtil.setError(lblStatus,"Invalid start date!");
+            	return;
+            }
+            
+            try{
+            	ed=Date.valueOf(txtEd.getText().trim());
+            }catch(Exception ex){
+            	FxUtil.setError(lblStatus,"Invalid end date!");
+            	return;
+            }
+            if(!sd.toLocalDate().isAfter(LocalDate.now().minusDays(1))){
+            	FxUtil.setError(lblStatus,"Start date cannot be in the past!");
+            	return;
+            }
+            if(ed.before(sd)){
+            	FxUtil.setError(lblStatus,"End date must be after start date!");
+            	return;
+            }
+            try{st=parseTime(txtSt.getText().trim());
+            }catch(Exception ex){
+            	FxUtil.setError(lblStatus,"Invalid start time! Use HH:MM");
+            	return;
+            }
+            try{et=parseTime(txtEt.getText().trim());
+            }catch(Exception ex){
+            	FxUtil.setError(lblStatus,"Invalid end time! Use HH:MM");
+            	return;
+            }
+            
+            int pax; 
+            try{
+            	pax=Integer.parseInt(txtPax.getText().trim());
+            	if(pax<=0)throw new Exception();
+            }
+            catch(Exception ex){
+            	FxUtil.setError(lblStatus,"Pax count must be a positive number!");
+            	return;
+            }
+           
             int selIdx=cmbAss.getSelectionModel().getSelectedIndex();
-            if(selIdx<0){FxUtil.setError(lblStatus,"Select an assignment!");return;}
+            if(selIdx<0){
+            	FxUtil.setError(lblStatus,"Select an assignment!");
+            	return;
+            }
             int selAid=assignmentIds[selIdx];
-            if(pax>assignCaps[selIdx]){FxUtil.setError(lblStatus,"Pax count exceeds vehicle capacity ("+assignCaps[selIdx]+")!");return;}
-            if(!availableAssignments(sd,ed,-1).contains(selAid)){FxUtil.setError(lblStatus,"Assignment no longer available!");return;}
+            
+            if(pax>assignCaps[selIdx]){
+            	FxUtil.setError(lblStatus,"Pax count exceeds vehicle capacity ("+assignCaps[selIdx]+")!");
+            	return;
+            }
+            if(!availableAssignments(sd,ed,-1).contains(selAid)){
+            	FxUtil.setError(lblStatus,"Assignment no longer available!");
+            	return;
+            }
             try{
                 PreparedStatement ps=conn.prepareStatement(
                     "INSERT INTO Trip (passenger_id,admin_id,assignment_id,start_date,start_time,end_date,end_time,pick_up_location,destination,passenger_count,trip_status) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
-                ps.setInt(1,passengerIds[cmbPass.getSelectionModel().getSelectedIndex()]); ps.setInt(2,loggedInAdminId);
-                ps.setInt(3,selAid); ps.setDate(4,sd); ps.setTime(5,st); ps.setDate(6,ed); ps.setTime(7,et);
-                ps.setString(8,txtPk.getText().trim()); ps.setString(9,txtDst.getText().trim());
-                ps.setInt(10,pax); ps.setString(11,cmbStatus.getValue()); ps.executeUpdate();
-                FxUtil.setSuccess(lblStatus,"Trip created successfully!"); loadTrips("All");
-            }catch(Exception e){FxUtil.setError(lblStatus,"Error creating trip! "+e.getMessage());e.printStackTrace();}
+                ps.setInt(1,passengerIds[cmbPass.getSelectionModel().getSelectedIndex()]);
+                ps.setInt(2,loggedInAdminId);
+                ps.setInt(3,selAid);
+                ps.setDate(4,sd);
+                ps.setTime(5,st);
+                ps.setDate(6,ed);
+                ps.setTime(7,et);
+                ps.setString(8,txtPk.getText().trim());
+                ps.setString(9,txtDst.getText().trim());
+                ps.setInt(10,pax);
+                ps.setString(11,cmbStatus.getValue());
+                ps.executeUpdate();
+                FxUtil.setSuccess(lblStatus,"Trip created successfully!");
+                loadTrips("All");
+            }catch(Exception e){
+            	FxUtil.setError(lblStatus,"Error creating trip! "+e.getMessage());e.printStackTrace();
+            }
         }
     }
 
-    // ── Update Trip Panel ─────────────────────────────────────────────────────
+   
     public class UpdateTripPanel extends VBox {
         private int tripId=-1;
         private ComboBox<String> cmbPass=new ComboBox<>(), cmbAss=new ComboBox<>();
@@ -402,22 +554,41 @@ public class TripPanel extends BorderPane {
         UpdateTripPanel(){
         	lblStatus.setMaxWidth(Double.MAX_VALUE);
         	lblStatus.setAlignment(Pos.CENTER);
-            setBackground(Background.fill(Color.WHITE)); setAlignment(Pos.CENTER);
-            cmbPass.getStyleClass().add("combo-field"); cmbPass.setPrefWidth(260);
-            cmbAss.getStyleClass().add("combo-field"); cmbAss.setPrefWidth(260);
-            VBox card=new VBox(0); card.getStyleClass().add("card"); card.setMaxWidth(560);
-            Label title=new Label("Update Trip"); title.getStyleClass().add("title-medium");
-            title.setMaxWidth(Double.MAX_VALUE); title.setAlignment(Pos.CENTER);
+            setBackground(Background.fill(Color.WHITE)); 
+            setAlignment(Pos.CENTER);
+            
+            cmbPass.getStyleClass().add("combo-field"); 
+            cmbPass.setPrefWidth(260);
+            cmbAss.getStyleClass().add("combo-field"); 
+            cmbAss.setPrefWidth(260);
+           
+            VBox card=new VBox(0); card.getStyleClass().add("card"); 
+            card.setMaxWidth(560);
+           
+            Label title=new Label("Update Trip"); 
+            title.getStyleClass().add("title-medium");
+            title.setMaxWidth(Double.MAX_VALUE); 
+            title.setAlignment(Pos.CENTER);
+            
             GridPane form=FxUtil.formGrid(); int y=0;
-            FxUtil.addFormRow(form,"Passenger:",  cmbPass,   y++); FxUtil.addFormRow(form,"Admin:",     txtAdmin,  y++);
-            FxUtil.addFormRow(form,"Assignment:", cmbAss,    y++); FxUtil.addFormRow(form,"Start Date:",txtSd,     y++);
-            FxUtil.addFormRow(form,"Start Time:", txtSt,     y++); FxUtil.addFormRow(form,"End Date:",  txtEd,     y++);
-            FxUtil.addFormRow(form,"End Time:",   txtEt,     y++); FxUtil.addFormRow(form,"Pickup:",    txtPk,     y++);
-            FxUtil.addFormRow(form,"Destination:",txtDst,    y++); FxUtil.addFormRow(form,"Pax Count:", txtPax,    y++);
+            FxUtil.addFormRow(form,"Passenger:",  cmbPass,   y++);
+            FxUtil.addFormRow(form,"Admin:",     txtAdmin,  y++);
+            FxUtil.addFormRow(form,"Assignment:", cmbAss,    y++); 
+            FxUtil.addFormRow(form,"Start Date:",txtSd,     y++);
+            FxUtil.addFormRow(form,"Start Time:", txtSt,     y++); 
+            FxUtil.addFormRow(form,"End Date:",  txtEd,     y++);
+            FxUtil.addFormRow(form,"End Time:",   txtEt,     y++); 
+            FxUtil.addFormRow(form,"Pickup:",    txtPk,     y++);
+            FxUtil.addFormRow(form,"Destination:",txtDst,    y++); 
+            FxUtil.addFormRow(form,"Pax Count:", txtPax,    y++);
             FxUtil.addFormRow(form,"Status:",     cmbStatus, y);
+            
             Button btnUpd=FxUtil.btnPrimary("Update"), btnBack=FxUtil.btnOutlinePrimary("Back");
-            btnUpd.setOnAction(e->update()); btnBack.setOnAction(e->{cards.show("LIST");loadTrips("All");});
-            HBox btnRow=new HBox(15,btnUpd,btnBack); btnRow.setAlignment(Pos.CENTER); btnRow.setPadding(new Insets(20,0,0,0));
+            btnUpd.setOnAction(e->update()); btnBack.setOnAction(e->{cards.show("LIST");
+            loadTrips("All");});
+
+            HBox btnRow=new HBox(15,btnUpd,btnBack); btnRow.setAlignment(Pos.CENTER);
+            btnRow.setPadding(new Insets(20,0,0,0));
             card.getChildren().addAll(title,FxUtil.spacer(20),form,btnRow,FxUtil.spacer(10),lblStatus);
             VBox wrapper = new VBox(card);
             wrapper.setAlignment(Pos.CENTER);
@@ -430,7 +601,8 @@ public class TripPanel extends BorderPane {
             getChildren().add(sp);
         }
         void load(int id){
-            tripId=id; lblStatus.setText(" "); loadDropdowns(); txtAdmin.setText(loggedInAdminName);
+            tripId=id; lblStatus.setText(" "); loadDropdowns();
+            txtAdmin.setText(loggedInAdminName);
             try{
                 PreparedStatement ps=conn.prepareStatement("SELECT * FROM Trip WHERE trip_id=?");
                 ps.setInt(1,id); ResultSet rs=ps.executeQuery();
@@ -440,10 +612,11 @@ public class TripPanel extends BorderPane {
                 	Integer aIdObj = (Integer) rs.getObject("assignment_id");
                 	curAssignId = (aIdObj != null) ? aIdObj : -1;
                     
-                	for(int i=0;i<passengerIds.length;i++) if(passengerIds[i]==pId){
+                	for(int i=0;i<passengerIds.length;i++) 
+                		if(passengerIds[i]==pId){
                 		cmbPass.getSelectionModel().select(i);
                 		break;
-                	}
+                		}
                    
                     if(curAssignId!=-1) 
                         for(int i=0;i<assignmentIds.length;i++) 
@@ -452,56 +625,143 @@ public class TripPanel extends BorderPane {
                                 break;
                             }                    
                     
-                    txtSd.setText(rs.getDate("start_date")!=null?rs.getDate("start_date").toString():"");
-                    txtSt.setText(rs.getTime("start_time")!=null?rs.getTime("start_time").toString():"HH:MM");
-                    txtEd.setText(rs.getDate("end_date")!=null?rs.getDate("end_date").toString():"");
-                    txtEt.setText(rs.getTime("end_time")!=null?rs.getTime("end_time").toString():"HH:MM");
-                    txtPk.setText(rs.getString("pick_up_location")); txtDst.setText(rs.getString("destination"));
-                    txtPax.setText(String.valueOf(rs.getInt("passenger_count"))); cmbStatus.setValue(rs.getString("trip_status"));
+                    txtSd.setText(rs.getDate("start_date")!=null?
+                    		rs.getDate("start_date").toString():"");
+                    
+                    txtSt.setText(rs.getTime("start_time")!=null?
+                    		rs.getTime("start_time").toString():"HH:MM");
+                   
+                    txtEd.setText(rs.getDate("end_date")!=null?
+                    		rs.getDate("end_date").toString():"");
+                    
+                    txtEt.setText(rs.getTime("end_time")!=null?
+                    		rs.getTime("end_time").toString():"HH:MM");
+                   
+                    txtPk.setText(rs.getString("pick_up_location")); 
+                    txtDst.setText(rs.getString("destination"));
+                    txtPax.setText(String.valueOf(rs.getInt("passenger_count"))); 
+                    cmbStatus.setValue(rs.getString("trip_status"));
                 }
             }catch(Exception e){e.printStackTrace();}
         }
         private void loadDropdowns(){
             try{
-                cmbPass.getItems().clear(); List<Integer> pIds=new ArrayList<>();
+                cmbPass.getItems().clear(); 
+                List<Integer> pIds=new ArrayList<>();
                 ResultSet rsP=conn.prepareStatement("SELECT p.passenger_id,u.first_name+' '+u.last_name AS name FROM Passenger p JOIN Users u ON p.passenger_id=u.user_id WHERE u.user_status='Active'").executeQuery();
-                while(rsP.next()){cmbPass.getItems().add(rsP.getString("name"));pIds.add(rsP.getInt("passenger_id"));}
+                while(rsP.next()){cmbPass.getItems().add(rsP.getString("name"));
+                pIds.add(rsP.getInt("passenger_id"));}
                 passengerIds=pIds.stream().mapToInt(i->i).toArray();
-                cmbAss.getItems().clear(); List<Integer> aIds=new ArrayList<>(), caps=new ArrayList<>();
+                cmbAss.getItems().clear(); 
+                List<Integer> aIds=new ArrayList<>(), caps=new ArrayList<>();
                 ResultSet rsA=conn.prepareStatement("SELECT va.assignment_id,du.first_name+' '+du.last_name+' - '+v.vehicle_model AS label,v.passenger_capacity FROM Vehicle_Assignment va JOIN Driver d ON va.driver_id=d.driver_id JOIN Users du ON d.driver_id=du.user_id JOIN Vehicle v ON va.vehicle_id=v.vehicle_id").executeQuery();
-                while(rsA.next()){cmbAss.getItems().add(rsA.getString("label")+" (Cap: "+rsA.getInt("passenger_capacity")+")");aIds.add(rsA.getInt("assignment_id"));caps.add(rsA.getInt("passenger_capacity"));}
-                assignmentIds=aIds.stream().mapToInt(i->i).toArray(); assignCaps=caps.stream().mapToInt(i->i).toArray();
-            }catch(Exception e){e.printStackTrace();}
+                
+                while(rsA.next()){
+                	cmbAss.getItems().add(rsA.getString("label")+" (Cap: "+rsA.getInt("passenger_capacity")+")");
+                	aIds.add(rsA.getInt("assignment_id"));caps.add(rsA.getInt("passenger_capacity"));
+                }
+                assignmentIds=aIds.stream().mapToInt(i->i).toArray();
+                assignCaps=caps.stream().mapToInt(i->i).toArray();
+            }catch(Exception e){
+            	e.printStackTrace();
+            }
         }
-        private java.sql.Time parseTime(String s) throws Exception{if(s.matches("\\d{2}:\\d{2}"))s+=":00";return java.sql.Time.valueOf(s);}
+        private Time parseTime(String s) throws Exception{
+        	if(s.matches("\\d{2}:\\d{2}"))s+=":00";
+        	return Time.valueOf(s);
+        }
+        
         private void update(){
-            if(tripId==-1)return;
-            if(loggedInAdminId<=0){FxUtil.setError(lblStatus,"No logged-in admin!");return;}
-            if(txtPk.getText().trim().isEmpty()){FxUtil.setError(lblStatus,"Pickup required!");return;}
-            if(txtDst.getText().trim().isEmpty()){FxUtil.setError(lblStatus,"Destination required!");return;}
-            java.sql.Date sd,ed; java.sql.Time st,et;
-            try{sd=java.sql.Date.valueOf(txtSd.getText().trim());}catch(Exception ex){FxUtil.setError(lblStatus,"Invalid start date!");return;}
-            try{ed=java.sql.Date.valueOf(txtEd.getText().trim());}catch(Exception ex){FxUtil.setError(lblStatus,"Invalid end date!");return;}
-            if(!sd.toLocalDate().isAfter(LocalDate.now().minusDays(1))){FxUtil.setError(lblStatus,"Start date cannot be in the past!");return;}
-            if(ed.before(sd)){FxUtil.setError(lblStatus,"End date must be after start date!");return;}
-            try{st=parseTime(txtSt.getText().trim());}catch(Exception ex){FxUtil.setError(lblStatus,"Invalid start time!");return;}
-            try{et=parseTime(txtEt.getText().trim());}catch(Exception ex){FxUtil.setError(lblStatus,"Invalid end time!");return;}
-            int pax; try{pax=Integer.parseInt(txtPax.getText().trim());if(pax<=0)throw new Exception();}
-            catch(Exception ex){FxUtil.setError(lblStatus,"Pax count must be positive!");return;}
+            if(tripId==-1)
+            	return;
+            if(loggedInAdminId<=0){
+            	FxUtil.setError(lblStatus,"No logged-in admin!");
+            	return;
+            }
+            if(txtPk.getText().trim().isEmpty()){
+            	FxUtil.setError(lblStatus,"Pickup required!");
+            	return;
+            }
+            if(txtDst.getText().trim().isEmpty()){
+            	FxUtil.setError(lblStatus,"Destination required!");
+            	return;
+            }
+            
+            Date sd,ed; Time st,et;
+            try{sd=java.sql.Date.valueOf(txtSd.getText().trim());
+            }catch(Exception ex){
+            	FxUtil.setError(lblStatus,"Invalid start date!");
+            	return;
+            }
+            
+            try{ed=java.sql.Date.valueOf(txtEd.getText().trim());
+            }catch(Exception ex){
+            	FxUtil.setError(lblStatus,"Invalid end date!");
+            	return;
+            }
+            
+            if(!sd.toLocalDate().isAfter(LocalDate.now().minusDays(1))){
+            	FxUtil.setError(lblStatus,"Start date cannot be in the past!");
+            	return;
+            }
+            
+            if(ed.before(sd)){
+            	FxUtil.setError(lblStatus,"End date must be after start date!");
+            	return;
+            }
+            
+            try{st=parseTime(txtSt.getText().trim());
+            }catch(Exception ex){
+            	FxUtil.setError(lblStatus,"Invalid start time!");
+            	return;
+            }
+            
+            try{et=parseTime(txtEt.getText().trim());
+            }catch(Exception ex){
+            	FxUtil.setError(lblStatus,"Invalid end time!");
+            	return;
+            }
+            
+            int pax; 
+            try{pax=Integer.parseInt(txtPax.getText().trim());
+            	if(pax<=0)throw new Exception();
+            }
+            catch(Exception ex){
+            	FxUtil.setError(lblStatus,"Pax count must be positive!");
+            	return;
+            }
+            
             int selIdx=cmbAss.getSelectionModel().getSelectedIndex();
             int selAid=(selIdx>=0&&assignmentIds.length>0)?assignmentIds[selIdx]:-1;
             if(selAid!=-1){
-                if(pax>assignCaps[selIdx]){FxUtil.setError(lblStatus,"Pax count exceeds vehicle capacity ("+assignCaps[selIdx]+")!");return;}
-                if(!availableAssignments(sd,ed,tripId).contains(selAid)){FxUtil.setError(lblStatus,"Assignment has overlapping trip!");return;}
+                if(pax>assignCaps[selIdx]){
+                	FxUtil.setError(lblStatus,"Pax count exceeds vehicle capacity ("+assignCaps[selIdx]+")!");
+                	return;
+                }
+                if(!availableAssignments(sd,ed,tripId).contains(selAid)){
+                	FxUtil.setError(lblStatus,"Assignment has overlapping trip!");
+                	return;
+                }
             }
+            
             try{
                 PreparedStatement ps=conn.prepareStatement(
                     "UPDATE Trip SET passenger_id=?,admin_id=?,assignment_id=?,start_date=?,start_time=?,end_date=?,end_time=?,pick_up_location=?,destination=?,passenger_count=?,trip_status=? WHERE trip_id=?");
-                ps.setInt(1,passengerIds[cmbPass.getSelectionModel().getSelectedIndex()]); ps.setInt(2,loggedInAdminId);
-                if(selAid!=-1) ps.setInt(3,selAid); else ps.setNull(3,Types.INTEGER);
-                ps.setDate(4,sd);ps.setTime(5,st);ps.setDate(6,ed);ps.setTime(7,et);
-                ps.setString(8,txtPk.getText().trim());ps.setString(9,txtDst.getText().trim());
-                ps.setInt(10,pax);ps.setString(11,cmbStatus.getValue());ps.setInt(12,tripId);
+                ps.setInt(1,passengerIds[cmbPass.getSelectionModel().getSelectedIndex()]); 
+                ps.setInt(2,loggedInAdminId);
+                
+                if(selAid!=-1) ps.setInt(3,selAid); 
+                else ps.setNull(3,Types.INTEGER);
+                
+                ps.setDate(4,sd);
+                ps.setTime(5,st);
+                ps.setDate(6,ed);
+                ps.setTime(7,et);
+                ps.setString(8,txtPk.getText().trim());
+                ps.setString(9,txtDst.getText().trim());
+                ps.setInt(10,pax);
+                ps.setString(11,cmbStatus.getValue());
+                ps.setInt(12,tripId);
                 ps.executeUpdate();
                 FxUtil.setSuccess(lblStatus,"Trip updated successfully!"); loadTrips("All");
             }catch(Exception e){FxUtil.setError(lblStatus,"Error updating trip! "+e.getMessage());e.printStackTrace();}

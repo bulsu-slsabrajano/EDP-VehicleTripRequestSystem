@@ -25,8 +25,8 @@ public class Passenger extends BorderPane {
     private trips  tripsPanel;
     private profile profilePanel;
 
-    // ── Active nav tracking (same as DriverUI) ─────────────────────────────
-   // private final Button[] navButtons = new Button[3];
+ 
+  
     private Button[] navButtons;
 
     public Passenger(String username, CardPane mainPane) {
@@ -40,7 +40,7 @@ public class Passenger extends BorderPane {
 
     private void createNavbar() {
 
-        // ── Header bar (logo + title + profile icon + logout) ──────────────
+        
         HBox header = new HBox();
         header.setBackground(Background.fill(Color.web("#141E32")));
         header.setAlignment(Pos.CENTER_LEFT);
@@ -61,7 +61,7 @@ public class Passenger extends BorderPane {
         HBox brand = new HBox(6, logoImg, titleLbl);
         brand.setAlignment(Pos.CENTER_LEFT);
 
-        // Profile icon button — mirrors DriverUI's profileBtn
+        // Profile icon button 
         Button profileBtn = new Button("👤");
         profileBtn.getStyleClass().add("profile-icon-btn");
         profileBtn.setOnAction(e -> {
@@ -84,7 +84,7 @@ public class Passenger extends BorderPane {
 
         header.getChildren().addAll(brand, FxUtil.hgrow(), rightBar);
 
-        // ── Navigation bar (gradient, same structure as DriverUI) ──────────
+        //
         HBox navBar = new HBox(20);
         navBar.getStyleClass().add("gradient-panel");
         navBar.setPrefHeight(45);
@@ -101,7 +101,7 @@ public class Passenger extends BorderPane {
             Button btn = new Button(navLabels[i]);
             btn.getStyleClass().add("topnav-btn");
             btn.setOnAction(e -> {
-                // Extra logic for trips and profile, same as before
+                
                 if (navCards[idx].equals("trips"))   tripsPanel.resetToPending();
                 //if (navCards[idx].equals("profile"))  profilePanel.loadProfile(userId);
                 innerPane.show(navCards[idx]);
@@ -111,7 +111,7 @@ public class Passenger extends BorderPane {
             navBar.getChildren().add(btn);
         }
 
-        // ── Stack header + navBar as top section ───────────────────────────
+        
         VBox topSection = new VBox(header, navBar);
         setTop(topSection);
     }
@@ -129,11 +129,11 @@ public class Passenger extends BorderPane {
         innerPane.show("dashboard");
         setCenter(innerPane);
 
-        // Mark Dashboard as active on startup
+        
         setActiveNav(0);
     }
 
-    // ── Nav active state helpers (mirrors DriverUI exactly) ────────────────
+   
     private void setActiveNav(int activeIdx) {
         for (int i = 0; i < navButtons.length; i++) {
             if (navButtons[i] == null) continue;
@@ -146,7 +146,7 @@ public class Passenger extends BorderPane {
         for (Button b : navButtons) b.getStyleClass().remove("topnav-btn-active");
     }
 
-    // ── DB helpers ─────────────────────────────────────────────────────────
+    
     private int getUserIdFromUsername(String uname) {
         try {
             DbConnectMsSql db = new DbConnectMsSql();

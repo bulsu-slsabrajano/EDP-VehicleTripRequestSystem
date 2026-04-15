@@ -48,13 +48,12 @@ public class AdminUiPanel extends BorderPane {
         setCenter(contentPane);
     }
 
-    // ── Sidebar ──────────────────────────────────────────────────────────────
     private VBox buildSidebar() {
         VBox sidebar = new VBox(0);
         sidebar.getStyleClass().add("gradient-panel");
         sidebar.setPrefWidth(260);
 
-        // Brand
+
         HBox brand = new HBox(8);
         brand.setPadding(new Insets(18, 14, 14, 14));
         brand.setAlignment(Pos.CENTER_LEFT);
@@ -68,12 +67,12 @@ public class AdminUiPanel extends BorderPane {
         brandLbl.setStyle("-fx-font-weight:bold;-fx-font-size:22px;-fx-text-fill:white;");
         brand.getChildren().addAll(logoImg, brandLbl);
 
-        // Nav items
+        
         VBox nav = new VBox(6);
         nav.setPadding(new Insets(0, 10, 10, 10));
         VBox.setVgrow(nav, Priority.ALWAYS);
 
-        // Content panels
+        //panels
         DashboardPanel         dashPanel    = new DashboardPanel();
         UserPanel              userPanel    = new UserPanel();
         VehiclePanel           vehiclePanel = new VehiclePanel();
@@ -132,8 +131,8 @@ public class AdminUiPanel extends BorderPane {
         return sidebar;
     }
 
-    // ── Content wrapper (header + body) ─────────────────────────────────────
-    private BorderPane wrap(String title, javafx.scene.layout.Region body) {
+   
+    private BorderPane wrap(String title, Region body) {
         BorderPane bp = new BorderPane();
 
         HBox header = new HBox();
@@ -147,12 +146,12 @@ public class AdminUiPanel extends BorderPane {
         Button profileIcon = new Button("👤");
 
         profileIcon.setStyle(
-            "-fx-font-size: 22px;" +                 // larger icon
+            "-fx-font-size: 22px;" +                
             "-fx-background-color: transparent;" +
             "-fx-border-width: 0;" +
             "-fx-cursor: hand;" +
-            "-fx-text-fill: #0F2573;" +              // your desired color
-            "-fx-font-family: 'Segoe UI Emoji';" +  // emoji font
+            "-fx-text-fill: #0F2573;" +              
+            "-fx-font-family: 'Segoe UI Emoji';" +  
             "-fx-padding: 0 30px 0 0;"
         );
 
@@ -172,7 +171,7 @@ public class AdminUiPanel extends BorderPane {
         return bp;
     }
 
-    // ── Nav button factory ───────────────────────────────────────────────────
+    
     private Button navBtn(String text, Ikon icon) {
         FontIcon fi = new FontIcon(icon);
         fi.setIconSize(16);
@@ -203,7 +202,7 @@ public class AdminUiPanel extends BorderPane {
         selectedBtn = null;
     }
 
-    // ── Audit log ────────────────────────────────────────────────────────────
+    //Audit log
     public void insertAuditLog(String status) {
         try {
             PreparedStatement ps = conn.prepareStatement(

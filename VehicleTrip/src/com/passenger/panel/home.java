@@ -52,7 +52,7 @@ public class home extends VBox {
         header.setAlignment(Pos.CENTER_LEFT);
         header.setPadding(new Insets(10, 20, 6, 20));
 
-        // ── Content area ──────────────────────────────────────────────────────
+        
         VBox content = new VBox(8);
         content.setPadding(new Insets(0, 15, 15, 15));
         content.setBackground(Background.fill(Color.TRANSPARENT));
@@ -85,7 +85,7 @@ public class home extends VBox {
         quickInner.getChildren().addAll(quickTop, btnRow);
         quickWrapper.getChildren().add(quickInner);
 
-        // Summary cards row
+        //Summary cards row
         VBox summaryWrapper = new VBox(8);
         summaryWrapper.getStyleClass().add("rounded-card");
         summaryWrapper.setPadding(new Insets(10));
@@ -103,7 +103,7 @@ public class home extends VBox {
 
         VBox topSection = new VBox(10, quickWrapper, summaryWrapper);
 
-        // Recent trips table
+        // Recent trips 
         VBox tableBox = new VBox(8);
         tableBox.getStyleClass().add("rounded-card");
         tableBox.setPadding(new Insets(10));
@@ -181,7 +181,8 @@ public class home extends VBox {
             if (rs.next()) pId = rs.getInt(1);
 
             PreparedStatement p1 = conn.conn.prepareStatement("SELECT COUNT(*) FROM Trip WHERE passenger_id=?");
-            p1.setInt(1, pId); ResultSet r1 = p1.executeQuery();
+            p1.setInt(1, pId); 
+            ResultSet r1 = p1.executeQuery();
             if (r1.next()) lblTotalTrips.setText(r1.getString(1));
 
             PreparedStatement p2 = conn.conn.prepareStatement(
@@ -203,7 +204,9 @@ public class home extends VBox {
                 "SELECT TOP 10 t.trip_id,v.vehicle_model,t.destination,t.start_date,t.end_date,t.trip_status " +
                 "FROM Trip t JOIN Vehicle_Assignment va ON t.assignment_id=va.assignment_id " +
                 "JOIN Vehicle v ON va.vehicle_id=v.vehicle_id WHERE t.passenger_id=? ORDER BY t.start_date DESC");
-            p3.setInt(1, pId); ResultSet r3 = p3.executeQuery();
+            p3.setInt(1, pId); 
+            ResultSet r3 = p3.executeQuery();
+            
             while (r3.next()) {
                 tableData.add(new Object[]{
                     r3.getInt(1), r3.getString(2), r3.getString(3),

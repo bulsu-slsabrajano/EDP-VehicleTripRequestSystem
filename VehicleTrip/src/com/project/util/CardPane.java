@@ -6,9 +6,7 @@ import javafx.scene.layout.StackPane;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Replaces Swing's CardLayout. Only one child is visible+managed at a time.
- */
+//equivalent ng cardlayout
 public class CardPane extends StackPane {
 
     private final Map<String, Node> cards = new HashMap<>();

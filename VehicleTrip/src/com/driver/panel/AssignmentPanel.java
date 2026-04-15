@@ -37,7 +37,7 @@ public class AssignmentPanel extends VBox {
         Label title = new Label("Assignments");
         title.setStyle("-fx-font-weight:bold;-fx-font-size:26px;-fx-text-fill:#1A2B6D;");
 
-        // ── Assignments table section ─────────────────────────────────────────
+        //table
         VBox tableSection = new VBox(10);
         tableSection.setStyle(
             "-fx-border-color:#C8D2E6;-fx-border-width:1px;-fx-border-radius:6px;" +
@@ -69,7 +69,7 @@ public class AssignmentPanel extends VBox {
         tableSection.getChildren().addAll(sectionTitle, FxUtil.tableScroll(assignmentTable));
         VBox.setVgrow(tableSection, Priority.ALWAYS);
 
-        // ── Detail card ───────────────────────────────────────────────────────
+        //card 
         VBox detailCard = new VBox(10);
         detailCard.setStyle(
             "-fx-border-color:#C8D2E6;-fx-border-width:1px;-fx-border-radius:6px;" +

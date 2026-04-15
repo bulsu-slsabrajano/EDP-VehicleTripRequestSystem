@@ -48,7 +48,7 @@ public class DashboardPanel extends VBox {
     }
 
     private void buildUI() {
-        // ── Top bar ─────────────────────────────────────────────────────────
+        
         HBox topBar = new HBox();
         topBar.setAlignment(Pos.CENTER_LEFT);
         topBar.setPadding(new Insets(0, 0, 10, 0));
@@ -64,7 +64,7 @@ public class DashboardPanel extends VBox {
         
         topBar.getChildren().addAll(lblWelcome, spacer, btnRefresh);
 
-        // ── Summary cards ────────────────────────────────────────────────────
+        //Summary cards 
         lblUsers      = new Label("0");
         lblDrivers    = new Label("0");
         lblVehicles   = new Label("0");
@@ -78,7 +78,7 @@ public class DashboardPanel extends VBox {
             summaryCard("Total Trips",        lblTotalTrips)
         );
 
-        // ── Status cards ─────────────────────────────────────────────────────
+        // Status cards
         lblPending   = statusLabel();
         lblApproved  = statusLabel();
         lblCompleted = statusLabel();
@@ -93,7 +93,7 @@ public class DashboardPanel extends VBox {
             statusCard("Cancelled", lblCancelled, "status-card-cancelled")
         );
 
-        // ── Upcoming trips table ─────────────────────────────────────────────
+        //Upcoming trips table
         Label tblTitle = new Label("Upcoming Trips");
         tblTitle.getStyleClass().add("title-small");
         tblTitle.setPadding(new Insets(14, 0, 6, 0));
@@ -109,7 +109,7 @@ public class DashboardPanel extends VBox {
         loadDashboard();
     }
 
-    // ── Card builders ─────────────────────────────────────────────────────────
+    
     private VBox summaryCard(String title, Label valueLabel) {
         VBox card = new VBox(4);
         card.getStyleClass().add("shadow-card");
@@ -161,7 +161,7 @@ public class DashboardPanel extends VBox {
         return card;
     }
 
-    // ── Data loading ──────────────────────────────────────────────────────────
+    //Data loading
     private void loadDashboard() {
         try {
             ResultSet r1 = conn.prepareStatement("SELECT COUNT(*) FROM Users").executeQuery();

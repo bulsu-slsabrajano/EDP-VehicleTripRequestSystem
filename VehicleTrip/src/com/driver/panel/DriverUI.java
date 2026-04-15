@@ -34,7 +34,7 @@ public class DriverUI extends BorderPane {
     }
 
     private void buildUI() {
-        // ── Header bar ───────────────────────────────────────────────────────
+        //Header bar
         HBox header = new HBox();
         header.setBackground(Background.fill(Color.web("#141E32")));
         //header.getStyleClass().add("gradient-panel");
@@ -80,7 +80,7 @@ public class DriverUI extends BorderPane {
 
         header.getChildren().addAll(brand, FxUtil.hgrow(), rightBar);
 
-        // ── Navigation bar ────────────────────────────────────────────────────
+        
         HBox navBar = new HBox(0);
         navBar.getStyleClass().add("gradient-panel");
         navBar.setPrefHeight(45);
@@ -104,7 +104,7 @@ public class DriverUI extends BorderPane {
 
         VBox topSection = new VBox(header, navBar);
 
-        // ── Content panels ────────────────────────────────────────────────────
+        //panels 
         homePanel       = new HomePanel(DriverData.username);
         assignmentPanel = new AssignmentPanel();
         vehiclePanel    = new VehiclePanel();

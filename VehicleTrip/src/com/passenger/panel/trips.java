@@ -41,10 +41,9 @@ public class trips extends VBox {
     }
 
     private void buildUI() {
-        // ── Gradient tab header ───────────────────────────────────────────────
-        
+       
 
-        // ── Pending tab ───────────────────────────────────────────────────────
+        //Pending tab 
         pendingT = buildTripTable(pendingData);
         VBox pendingContent = new VBox(FxUtil.tableScroll(pendingT));
         VBox.setVgrow(pendingT, Priority.ALWAYS);
@@ -57,7 +56,7 @@ public class trips extends VBox {
         pendingContent.getChildren().addAll(bottomBar(btnCancelPending));
         Tab pendingTab = tab("Pending", pendingContent);
 
-        // ── Approved tab ──────────────────────────────────────────────────────
+        //Approved tab
         approvedT = buildTripTable(approvedData);
         VBox approvedContent = new VBox(FxUtil.tableScroll(approvedT));
         VBox.setVgrow(approvedT, Priority.ALWAYS);
@@ -65,21 +64,23 @@ public class trips extends VBox {
         Button btnCancelApproved  = FxUtil.btnDanger("Cancel Trip");
         Button btnCompleteApproved = FxUtil.btnSuccess("Completed");
         Button approvedRefresh    = FxUtil.btnPrimary("Refresh");
-        approvedRefresh.setOnAction(e -> { approvedData.clear(); loadTrips(approvedData, "Approved"); });
+        approvedRefresh.setOnAction(e -> { approvedData.clear();
+        loadTrips(approvedData, "Approved"); });
         btnCancelApproved.setOnAction(e -> moveRow(approvedT, approvedData, cancelledData, "Cancelled"));
         btnCompleteApproved.setOnAction(e -> moveRow(approvedT, approvedData, completedData, "Completed"));
 
         approvedContent.getChildren().add(bottomBar(btnCancelApproved, btnCompleteApproved));
         Tab approvedTab = tab("Approved", approvedContent);
 
-        // ── Completed tab ─────────────────────────────────────────────────────
+        //Completed tab
         completedT = buildTripTable(completedData);
         VBox completedContent = new VBox(FxUtil.tableScroll(completedT));
         VBox.setVgrow(completedT, Priority.ALWAYS);
 
         Button btnRate          = FxUtil.btnPrimary("Rate Trip");
         Button completedRefresh = FxUtil.btnPrimary("Refresh");
-        completedRefresh.setOnAction(e -> { completedData.clear(); loadTrips(completedData, "Completed"); });
+        completedRefresh.setOnAction(e -> { completedData.clear();
+        loadTrips(completedData, "Completed"); });
         btnRate.setOnAction(e -> {
             Object[] row = completedT.getSelectionModel().getSelectedItem();
             if (row == null) { FxUtil.showInfo(null, "Please select a completed trip to rate."); return; }
@@ -90,13 +91,14 @@ public class trips extends VBox {
         completedContent.getChildren().add(bottomBar(btnRate));
         Tab completedTab = tab("Completed", completedContent);
 
-        // ── Cancelled tab ─────────────────────────────────────────────────────
+        //Cancelled tab
         cancelledT = buildTripTable(cancelledData);
         VBox cancelledContent = new VBox(FxUtil.tableScroll(cancelledT));
         VBox.setVgrow(cancelledT, Priority.ALWAYS);
 
         Button cancelledRefresh = FxUtil.btnPrimary("Refresh");
-        cancelledRefresh.setOnAction(e -> { cancelledData.clear(); loadTrips(cancelledData, "Cancelled"); });
+        cancelledRefresh.setOnAction(e -> { cancelledData.clear();
+        loadTrips(cancelledData, "Cancelled"); });
 
         Tab cancelledTab = tab("Cancelled", cancelledContent);
 
@@ -105,16 +107,13 @@ public class trips extends VBox {
         tabPane.getTabs().addAll(pendingTab, approvedTab, completedTab, cancelledTab);
         VBox.setVgrow(tabPane, Priority.ALWAYS);
 
-        // Sync custom header buttons with TabPane selection
-        
-
         getChildren().addAll(tabPane);
         VBox.setVgrow(tabPane, Priority.ALWAYS);
 
         loadAll();
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+  
     private TableView<Object[]> buildTripTable(ObservableList<Object[]> data) {
         TableView<Object[]> t = FxUtil.buildTable(
             "Trip ID","Assignment ID","Admin ID","Start Date","End Date",
@@ -158,11 +157,17 @@ public class trips extends VBox {
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 model.add(new Object[]{
-                    rs.getInt("trip_id"), rs.getObject("assignment_id"), rs.getObject("admin_id"),
-                    rs.getDate("start_date"), rs.getDate("end_date"),
-                    rs.getObject("start_time"), rs.getObject("end_time"),
-                    rs.getString("pick_up_location"), rs.getString("destination"),
-                    rs.getInt("passenger_count"), rs.getString("trip_status")
+                    rs.getInt("trip_id"), 
+                    rs.getObject("assignment_id"),
+                    rs.getObject("admin_id"),
+                    rs.getDate("start_date"), 
+                    rs.getDate("end_date"),
+                    rs.getObject("start_time"),
+                    rs.getObject("end_time"),
+                    rs.getString("pick_up_location"),
+                    rs.getString("destination"),
+                    rs.getInt("passenger_count"),
+                    rs.getString("trip_status")
                 });
             }
         } catch (Exception e) { e.printStackTrace(); }
@@ -172,7 +177,9 @@ public class trips extends VBox {
         try {
             PreparedStatement ps = conn.prepareStatement(
                 "UPDATE Trip SET trip_status=? WHERE trip_id=?");
-            ps.setString(1, status); ps.setInt(2, tripId); ps.executeUpdate();
+            ps.setString(1, status);
+            ps.setInt(2, tripId);
+            ps.executeUpdate();
         } catch (Exception e) { e.printStackTrace(); }
     }
 
@@ -180,14 +187,21 @@ public class trips extends VBox {
         try {
             PreparedStatement ps = conn.prepareStatement(
                 "SELECT assignment_id FROM Trip WHERE trip_id=?");
-            ps.setInt(1, tripId); ResultSet rs = ps.executeQuery();
+            ps.setInt(1, tripId);
+            ResultSet rs = ps.executeQuery();
+           
             if (!rs.next()) return;
             Object assignObj = rs.getObject("assignment_id");
-            if (assignObj == null) return;
+           
+            if (assignObj == null) 
+            	return;
+            
             int aid = (int) assignObj;
+            
             PreparedStatement ps2 = conn.prepareStatement(
                 "SELECT driver_id, vehicle_id FROM Vehicle_Assignment WHERE assignment_id=?");
-            ps2.setInt(1, aid); ResultSet rs2 = ps2.executeQuery();
+            ps2.setInt(1, aid);
+            ResultSet rs2 = ps2.executeQuery();
             if (rs2.next()) {
                 conn.prepareStatement("UPDATE Driver SET driver_status='Available' WHERE driver_id=" + rs2.getInt("driver_id")).executeUpdate();
                 conn.prepareStatement("UPDATE Vehicle SET vehicle_status='Available' WHERE vehicle_id=" + rs2.getInt("vehicle_id")).executeUpdate();
@@ -198,12 +212,16 @@ public class trips extends VBox {
     private void moveRow(TableView<Object[]> table, ObservableList<Object[]> source,
                          ObservableList<Object[]> target, String newStatus) {
         Object[] row = table.getSelectionModel().getSelectedItem();
-        if (row == null) { FxUtil.showInfo(null, "Please select a trip first."); return; }
+        if (row == null) { 
+        	FxUtil.showInfo(null, "Please select a trip first.");
+        	return;
+        }
 
         String msg = "Cancelled".equals(newStatus)
             ? "Are you sure you want to cancel this trip?"
             : "Are you sure this trip is completed?";
-        if (!FxUtil.confirm(null, msg, "Confirm")) return;
+        if (!FxUtil.confirm(null, msg, "Confirm")) 
+        	return;
 
         int tripId = (int) row[0];
         updateTripStatus(tripId, newStatus);
@@ -254,11 +272,15 @@ public class trips extends VBox {
         try {
             PreparedStatement chk = conn.prepareStatement(
                 "SELECT COUNT(*) FROM trip_rating WHERE trip_id=?");
-            chk.setInt(1, tripId); ResultSet rc = chk.executeQuery();
+            chk.setInt(1, tripId);
+            ResultSet rc = chk.executeQuery();
+           
             if (rc.next() && rc.getInt(1) > 0) return "DUPLICATE";
             PreparedStatement ps = conn.prepareStatement(
                 "INSERT INTO trip_rating (trip_id, rating_value, feedback) VALUES (?,?,?)");
-            ps.setInt(1, tripId); ps.setInt(2, rating); ps.setString(3, feedback);
+            ps.setInt(1, tripId); 
+            ps.setInt(2, rating);
+            ps.setString(3, feedback);
             return ps.executeUpdate() > 0 ? "SUCCESS" : "FAILED";
         } catch (Exception e) { e.printStackTrace(); return "ERROR"; }
     }

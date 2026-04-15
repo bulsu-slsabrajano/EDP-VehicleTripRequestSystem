@@ -1,32 +1,18 @@
-/* ============================================================
-   VTRS – EduTRIP   |   Global Stylesheet
-   Package: com.project.style
-   ============================================================ */
 
-/* ── Root / Scene ───────────────────────────────────────────── */
 .root {
     -fx-font-family: "Segoe UI", Arial, sans-serif;
     -fx-font-size: 13px;
     -fx-background-color: #ffffff;
 }
 
-/* ============================================================
-   COLOUR PALETTE  (used as look-up values in Java code too)
-   primary  : #0096C7
-   dark     : #0F2573
-   green    : #27AE60
-   orange   : #E67E22
-   red      : #DC3545
-   stripe   : #F5F8FC
-   border   : #D2DCF0
-   ============================================================ */
 
-/* ── Gradient panels (sidebar, header, tab-bar) ─────────────── */
+
+/*Gradient panels (sidebar, header, tab-bar)*/
 .gradient-panel {
     -fx-background-color: linear-gradient(to bottom, #0096C7 0%, #0F2573 100%);
 }
 
-/* ── Generic card (white box with subtle border) ────────────── */
+/* Generic card (white box with subtle border) */
 .card {
     -fx-background-color: #ffffff;
     -fx-border-color: #dcdcdc;
@@ -37,7 +23,7 @@
     -fx-padding: 20px 30px;
 }
 
-/* ── Shadow card (dashboard summary cards) ──────────────────── */
+/*Shadow card (dashboard summary cards) */
 .shadow-card {
     -fx-background-color: #0096C7;
     -fx-background-radius: 12px;
@@ -54,13 +40,13 @@
     -fx-text-fill: white;
 }
 
-/* ── Status border cards ────────────────────────────────────── */
+/*Status border cards  */
 .status-card-pending  { -fx-border-color: #E67E22; -fx-border-width: 2px; -fx-border-radius: 6px; -fx-padding: 10px; }
 .status-card-approved { -fx-border-color: #0096C7; -fx-border-width: 2px; -fx-border-radius: 6px; -fx-padding: 10px; }
 .status-card-completed{ -fx-border-color: #27AE60; -fx-border-width: 2px; -fx-border-radius: 6px; -fx-padding: 10px; }
 .status-card-cancelled{ -fx-border-color: #DC3545; -fx-border-width: 2px; -fx-border-radius: 6px; -fx-padding: 10px; }
 
-/* ── Buttons ────────────────────────────────────────────────── */
+/* Buttons */
 .btn {
     -fx-font-family: "Segoe UI", Arial, sans-serif;
     -fx-font-weight: bold;
@@ -142,7 +128,7 @@
     -fx-padding: 4px 10px;
 }
 
-/* ── Sidebar nav buttons ────────────────────────────────────── */
+/* Sidebar nav buttons  */
 .nav-btn {
     -fx-font-family: "Segoe UI", Arial, sans-serif;
     -fx-font-weight: bold;
@@ -160,7 +146,7 @@
 .nav-btn:hover { -fx-background-color: rgba(255,255,255,0.15); }
 .nav-btn-selected { -fx-background-color: rgba(255,255,255,0.22); }
 
-/* ── Top horizontal nav buttons (driver UI) ─────────────────── */
+/* Top horizontal nav buttons (driver UI) */
 .topnav-btn {
     -fx-font-family: "Segoe UI", Arial, sans-serif;
     -fx-font-weight: bold;
@@ -179,7 +165,7 @@
     -fx-border-width: 0 0 3px 0;
 }
 
-/* ── Form fields ────────────────────────────────────────────── */
+/* Form fields  */
 .form-field {
     -fx-font-family: "Segoe UI", Arial, sans-serif;
     -fx-font-size: 13px;
@@ -221,7 +207,7 @@
     -fx-padding: 10px 0 4px 0;
 }
 
-/* ── Titles ──────────────────────────────────────────────────── */
+/*Titles  */
 .title-large {
     -fx-font-weight: bold;
     -fx-font-size: 24px;
@@ -249,7 +235,7 @@
     -fx-text-fill: #111111;
 }
 
-/* ── Status text colours ────────────────────────────────────── */
+/* Status text colours  */
 .status-pending   { -fx-text-fill: #E67E22; -fx-font-weight: bold; }
 .status-approved  { -fx-text-fill: #0096C7; -fx-font-weight: bold; }
 .status-completed { -fx-text-fill: #27AE60; -fx-font-weight: bold; }
@@ -260,7 +246,7 @@
 .status-success   { -fx-text-fill: #009650; }
 .status-error     { -fx-text-fill: #DC3545; }
 
-/* ── TableView ──────────────────────────────────────────────── */
+/*  TableView  */
 .styled-table {
     -fx-background-color: white;
     -fx-border-color: #D2DCF0;
@@ -299,7 +285,7 @@
     -fx-alignment: CENTER_LEFT;
 }
 
-/* ── ScrollPane ─────────────────────────────────────────────── */
+/* ScrollPane  */
 .edge-to-edge {
     -fx-background-color: transparent;
     -fx-background-insets: 0;
@@ -307,13 +293,13 @@
 }
 .edge-to-edge > .viewport { -fx-background-color: transparent; }
 
-/* ── Scroll bar ─────────────────────────────────────────────── */
+/* Scroll bar  */
 .scroll-bar:vertical .thumb { -fx-background-color: rgba(0,150,199,0.45); -fx-background-radius: 4px; }
 .scroll-bar:vertical .track { -fx-background-color: #F0F4FA; }
 .scroll-bar:vertical .increment-button,
 .scroll-bar:vertical .decrement-button { -fx-pref-height: 0; -fx-max-height: 0; }
 
-/* ── TabPane (passenger trips, driver trips) ────────────────── */
+/* TabPane (passenger trips, driver trips)  */
 .custom-tab-pane .tab-header-area { -fx-padding: 0; }
 
 .custom-tab-pane .tab-header-background { 
@@ -344,7 +330,7 @@
     -fx-background-color: #D1D9E6;
 }
 
-/* ── Login page ──────────────────────────────────────────────── */
+/* Login page  */
 .login-panel {
     -fx-background-color: white;
 }
@@ -368,7 +354,7 @@
     -fx-text-fill: white;
 }
 
-/* ── Content header bar (white stripe inside each panel) ───── */
+/*  Content header bar (white stripe inside each panel) */
 .content-header {
     -fx-background-color: white;
     -fx-pref-height: 60px;
@@ -386,7 +372,7 @@
     -fx-padding: 0 30px 0 0;
 }
 
-/* ── ComboBox ───────────────────────────────────────────────── */
+/* ComboBox */
 .combo-field {
     -fx-font-size: 13px;
     -fx-pref-height: 32px;
@@ -394,28 +380,28 @@
 }
 .combo-field .list-cell { -fx-padding: 4px 8px; }
 
-/* ── Spinner ────────────────────────────────────────────────── */
+/*Spinner */
 .spinner-field {
     -fx-pref-height: 32px;
     -fx-pref-width: 260px;
     -fx-font-size: 13px;
 }
 
-/* ── DatePicker ─────────────────────────────────────────────── */
+/*DatePicker */
 .date-field {
     -fx-pref-height: 32px;
     -fx-pref-width: 260px;
     -fx-font-size: 13px;
 }
 
-/* ── Separator ──────────────────────────────────────────────── */
+/* Separator  */
 .hor-sep {
     -fx-background-color: #E6EBF5;
     -fx-pref-height: 1px;
     -fx-max-height: 1px;
 }
 
-/* ── Password field ──────────────────────────────────────────── */
+/* Password field  */
 .password-field {
     -fx-font-family: "Segoe UI", Arial, sans-serif;
     -fx-font-size: 13px;
@@ -433,7 +419,7 @@
     -fx-effect: dropshadow(gaussian, rgba(0,150,199,0.25), 4, 0, 0, 0);
 }
 
-/* ── TextArea ───────────────────────────────────────────────── */
+/*TextArea  */
 .feedback-area {
     -fx-font-size: 13px;
     -fx-border-color: #D2DCF0;
@@ -445,7 +431,7 @@
     -fx-padding: 6px 8px;
 }
 
-/* ── Passenger home quick-action buttons ────────────────────── */
+/*  Passenger home quick-action buttons  */
 .quick-action-card {
     -fx-background-color: white;
     -fx-border-color: #0096C7;
@@ -465,7 +451,7 @@
     -fx-text-fill: #0096C7;
 }
 
-/* ── Rounded panel background (passenger) ───────────────────── */
+/*  Rounded panel background (passenger)  */
 .rounded-card {
     -fx-background-color: white;
     -fx-background-radius: 15px;
@@ -474,7 +460,7 @@
     -fx-padding: 10px;
 }
 
-/* ── Driver status toggle card ──────────────────────────────── */
+/*  Driver status toggle card  */
 .driver-status-card {
     -fx-background-color: white;
     -fx-border-color: #000000;
@@ -483,7 +469,7 @@
     -fx-spacing: 10px;
 }
 
-/* ── Rating star label ──────────────────────────────────────── */
+/* Rating star label */
 .rating-avg {
     -fx-font-weight: bold;
     -fx-font-size: 18px;

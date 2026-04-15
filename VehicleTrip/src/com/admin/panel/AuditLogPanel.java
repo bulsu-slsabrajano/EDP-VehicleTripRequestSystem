@@ -32,7 +32,7 @@ public class AuditLogPanel extends BorderPane {
     }
 
     private void buildUI() {
-        // ── Filter bar ───────────────────────────────────────────────────────
+    
         HBox filterBar = new HBox(8);
         filterBar.setAlignment(Pos.CENTER_LEFT);
         filterBar.setPadding(new Insets(0, 0, 10, 0));
@@ -64,12 +64,12 @@ public class AuditLogPanel extends BorderPane {
             FxUtil.hgrow(), btnRefresh
         );
 
-        // ── Table ────────────────────────────────────────────────────────────
+        //Table
         table = FxUtil.buildTable("Log ID", "User", "Date", "Status");
         FxUtil.applyStatusRenderer(table, 3);
         tableData = FxUtil.tableData(table);
 
-        // ── Bottom bar ───────────────────────────────────────────────────────
+        //Bottom bar
         Button btnShowUser = FxUtil.btnPrimary("Show Logs for Selected User");
         btnShowUser.setOnAction(e -> {
             Object[] row = table.getSelectionModel().getSelectedItem();
